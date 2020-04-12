@@ -2,7 +2,6 @@ from framework import *
 
 train_features, train_target = generate_disc_set(1000)
 test_features, test_target = generate_disc_set(1000)
-plot_dataset(train_features, train_target)
 
 nb_epochs = 400
 batch_size = 10
