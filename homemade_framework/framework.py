@@ -81,9 +81,6 @@ class Module(object):
     def backward(self, *gradwrtoutput):
         raise NotImplementedError
 
-    def param(self):
-        return []
-
 
 # RelU activation function
 class ReLU(Module):
