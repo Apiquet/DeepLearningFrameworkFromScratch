@@ -15,7 +15,7 @@ Model = Sequential([Linear(2, hidden_size),
                     Linear(hidden_size, 2),
                     Softmax()], LossMSE())
 # Set the learning rate
-Model.set_Lr(0.01)
+Model.set_Lr(0.003)
 
 # Print model's parameters
 Model.print(print_color=False)

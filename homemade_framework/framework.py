@@ -178,11 +178,20 @@ class Softmax(Module):
     def __init__(self):
         super().__init__()
         self.type = "Softmax"
+        self.save = 0
+    
+    def eq(self, x):
+        return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
+
     def forward(self, x):
-        y = np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
+        self.save = x
+        y = self.eq(x)
         return y
+
     def backward(self, x):
-        return x
+        y = np.multiply(self.eq(self.save) * (1 - self.eq(self.save)), x)
+        return y
+
     def print(self, color=""):
         print_in_color("\tSoftmax function", color)
         return
