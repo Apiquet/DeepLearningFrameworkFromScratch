@@ -66,7 +66,7 @@ def get_inferences(model, data_features):
     return predicted_classes
 
 # Classes
-possible_types = ["Linear", "Activation", "Loss"]
+possible_types = ["Linear", "Activation", "Loss", "Softmax"]
 
 
 # heritage module definition
@@ -171,6 +171,21 @@ class LossMSE(Module):
 
     def grad(self, y, y_pred):
         return 2*(y_pred-y)
+
+
+#softmax function implementation 
+class Softmax(Module):
+    def __init__(self):
+        super().__init__()
+        self.type = "Softmax"
+    def forward(self, x):
+        y = np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
+        return y
+    def backward(self, x):
+        return x
+    def print(self, color=""):
+        print_in_color("\tSoftmax function", color)
+        return
 
 
 # Linear layer
