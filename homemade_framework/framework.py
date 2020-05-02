@@ -163,14 +163,14 @@ class LossMSE(Module):
         self.type = "Loss"
 
     def loss(self, y, y_pred):
-        loss = sum(((y_pred - y)**2).sum(axis=0))
+        loss = sum(((y_pred - y)**2).sum(axis=0))/y.shape[1]
         return loss
 
     def print(self, color=""):
         print_in_color("\tMSE", color)
 
     def grad(self, y, y_pred):
-        return 2*(y_pred-y)
+        return 2*(y_pred-y)/y.shape[1]
 
 
 #softmax function implementation 
