@@ -1,3 +1,4 @@
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -27,37 +28,37 @@ def print_in_color(message, color="red"):
             the list".format(choices.keys()))
 
 
-def train_homemade_model(model, num_epochs, train_features_np,
-                         train_target_np, test_features_np,
-                         test_target_np, batch_size):
-    start_time = datetime.datetime.now()
+def train_homemade_model(model, num_epochs, train_features,
+                         train_target, test_features,
+                         test_target, batch_size):
+    start_time = datetime.now()
     # Convert train_target to one hot encoding
-    train_target_one_hot = convert_to_one_hot_labels(train_features_np,
-                                                     train_target_np)
+    train_target_one_hot = convert_to_one_hot_labels(train_features,
+                                                     train_target)
 
-    print_current_results(0, model, train_features_np, train_target_np,
-                          test_features_np, test_target_np, 0,
+    print_current_results(0, model, train_features, train_target,
+                          test_features, test_target, 0,
                           prefix="Before training: ")
     test_results = []
     for epochs in range(0, num_epochs):
         loss_sum = 0
-        test_results.append(NN.get_inferences(Model, test_features_np))
+        test_results.append(get_inferences(model, test_features))
         for b in range(train_features.shape[0] // batch_size):
-            output = model_.forward(train_features_np[
+            output = model.forward(train_features[
                 list(range(b*batch_size, (b+1)*batch_size))])
             loss = model.backward(train_target_one_hot[
                 list(range(b*batch_size, (b+1)*batch_size))],
                                   output)
             loss_sum = loss_sum + loss.item()
         if epochs % 30 == 0:
-            print_current_results(epochs + 1, model, train_features_np,
-                                  train_target_np, test_features_np,
-                                  test_target_np, loss_sum)
+            print_current_results(epochs + 1, model, train_features,
+                                  train_target, test_features,
+                                  test_target, loss_sum)
 
-    training_time = datetime.datetime.now() - start_time
+    training_time = datetime.now() - start_time
     print('\nTraining time: {}'.format(training_time))
-    print_current_results(epochs, Model, train_features_np, train_target_np,
-                          test_features_np, test_target_np, loss_sum,
+    print_current_results(epochs, model, train_features, train_target,
+                          test_features, test_target, loss_sum,
                           prefix="After training: ")
 
 
