@@ -65,11 +65,8 @@ def train_homemade_model(model, num_epochs, train_features,
 # Data Manager
 def generate_disc_set(nb):
     features = np.random.uniform(-1, 1, (nb, 2))
-    target = []
-    for el in features:
-        target.append(int(((math.pow(el[0], 2) +
-                            math.pow(el[1], 2))/math.pi) < 0.2))
-    return features, np.asarray(target)
+    target = (features[:, 0]**2 + features[:, 1]**2)/math.pi < 0.2
+    return features, target.astype(int)
 
 
 def plot_dataset(features, target):
