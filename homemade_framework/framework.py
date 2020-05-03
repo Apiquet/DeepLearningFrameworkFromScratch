@@ -1,7 +1,7 @@
 from datetime import datetime
+import math
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 
 
 # Utils
@@ -22,7 +22,7 @@ def print_in_color(message, color="red"):
     elif color == "":
         print(message)
     elif color in choices:
-        print("\x1b[" + choices[color] + "m" + message + "\x1b[0m")
+        print("\033[" + choices[color] + "m" + message + "\033[0m")
     else:
         raise ValueError("Available colors: {}, '-h' to get\
             the list".format(choices.keys()))
