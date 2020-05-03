@@ -97,6 +97,7 @@ def get_inferences(model, data_features):
     predicted_classes = np.argmax(output, axis=1)
     return predicted_classes
 
+
 # Classes
 possible_types = ["Linear", "Activation", "Loss", "Softmax"]
 
