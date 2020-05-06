@@ -292,8 +292,8 @@ class Convolution(Module):
                                                       self.kernel_size))
 
     def print(self, color=""):
-        msg = "\tConvolution feature maps: {},\
-            kernel size: {}".format(self.out_channels, self.kernel.shape)
+        msg = "\tConvolution feature maps: {}, kernel size: {}".format(
+            self.out_channels, self.kernel.shape)
         print_in_color(msg, color)
 
     def print_kernels(self):
