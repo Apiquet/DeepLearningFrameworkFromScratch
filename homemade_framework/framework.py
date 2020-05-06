@@ -16,7 +16,8 @@ def print_current_results(epochs, Model, train_features, train_target,
 
 def print_in_color(message, color="red"):
     choices = {"green": "32", "blue": "34",
-               "magenta": "35", "red": "31"}
+               "magenta": "35", "red": "31",
+               "Gray": "37", "Cyan": "36"}
     if message == "-h":
         return list(choices.keys())
     elif color == "":
@@ -99,7 +100,8 @@ def get_inferences(model, data_features):
 
 
 # Classes
-possible_types = ["Linear", "Activation", "Loss", "Softmax"]
+possible_types = ["Linear", "Activation", "Loss",
+                  "Softmax", "Flatten", "Convolution"]
 
 
 # heritage module definition
@@ -267,6 +269,51 @@ class Linear(Module):
         self.x = x
         return np.matmul(x, self.weight) +\
             np.transpose(np.repeat(self.bias, x.shape[0], axis=1))
+
+    def set_Lr(self, lr):
+        self.lr = lr
+        return
+
+
+# Convolutional layer
+class Convolution(Module):
+    def __init__(self, in_channels=1, out_channels=16,
+                 kernel_size=3, stride=1, padding=1):
+        super().__init__()
+        self.type = "Convolution"
+        self.kernel_size = kernel_size
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.stride = stride
+        self.padding = padding
+        stdv = 1. / math.sqrt(self.kernel_size)
+        self.kernel = np.random.uniform(-stdv, stdv, (self.out_channels,
+                                                      self.kernel_size,
+                                                      self.kernel_size))
+
+    def print(self, color=""):
+        msg = "\tConvolution feature maps: {},\
+            kernel size: {}".format(self.out_channels, self.kernel.shape)
+        print_in_color(msg, color)
+
+    def print_kernels(self):
+        print(self.kernel)
+
+    def set_Lr(self, lr):
+        self.lr = lr
+        return
+
+    def update(self, grad):
+        lr = self.lr
+        self.weight = self.weight
+        self.bias = self.bias
+
+    def forward(self, x):
+        self.x = x
+        return x
+
+    def backward(self, grad):
+        return grad
 
     def set_Lr(self, lr):
         self.lr = lr
