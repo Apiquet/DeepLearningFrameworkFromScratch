@@ -320,6 +320,24 @@ class Convolution(Module):
         return
 
 
+# Flatten function implementation
+class Flatten(Module):
+    def __init__(self):
+        super().__init__()
+        self.type = "Flatten"
+
+    def forward(self, x):
+        y = x.reshape([np.prod(x.shape)])
+        return y
+
+    def backward(self, x):
+        return x
+
+    def print(self, color=""):
+        print_in_color("\tFlatten function", color)
+        return
+
+
 # Sequential architecture
 class Sequential(Module):
     def __init__(self, param, loss):
