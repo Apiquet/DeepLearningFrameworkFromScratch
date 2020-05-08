@@ -232,6 +232,54 @@ class Softmax(Module):
         return
 
 
+# Softmax function implementation
+class Batch_Norm(Module):
+    def __init__(self):
+        super().__init__()
+        self.type = "Batch Normalization"
+        self.gamma = 1
+        self.eps = 10**-100
+        self.beta = 0
+        self.x_mu = 0
+        self.inv_var = 0
+        self.x_hat = 0
+
+    def eq(self, x):
+        return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
+
+    def forward(self, x):
+        self.save = x
+        mean = np.sum(x, axis=1)/x.shape[1]
+        mean_repeated = np.repeat(mean[:, None], x.shape[1], axis=1)
+        self.x_mu = x - mean_repeated
+        var = np.sum((x-mean_repeated)**2, axis=1)/x.shape[1]
+        var_repeated = np.repeat(var[:, None], x.shape[1], axis=1)
+        self.inv_var = 1/(np.sqrt(var_repeated) + self.eps)
+        self.x_hat = self.x_mu * self.inv_var
+        norm = (x - mean_repeated)/(np.sqrt(var_repeated) + self.eps)
+        return self.gamma*norm + self.beta
+
+    def backward(self, x):
+        N, D = x.shape
+
+        # intermediate partial derivatives
+        dxhat = x * self.gamma
+
+        # final partial derivatives
+        dx = (1. / N) * self.inv_var * (N*dxhat - np.sum(dxhat, axis=0)
+                                        - self.x_hat*np.sum(
+                                            dxhat*self.x_hat, axis=0))
+        dbeta = np.sum(x, axis=0)
+        dgamma = np.sum(self.x_hat*x, axis=0)
+        # self.gamma = self.gamma + dgamma
+        # self.beta = self.beta + dbeta
+        return dx
+
+    def print(self, color=""):
+        print_in_color("\tBatch normalization function", color)
+        return
+
+
 # Linear layer
 class Linear(Module):
     def __init__(self, in_features, out_features):
