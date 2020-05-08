@@ -289,7 +289,7 @@ class Convolution(Module):
         self.out_channels = out_channels
         self.stride = stride
         self.padding = padding
-        stdv = 1. / math.sqrt(self.kernel_size)
+        stdv = 1. / math.sqrt(self.k_height)
         self.kernel = np.random.uniform(-stdv, stdv, (self.out_channels,
                                                       self.in_channels,
                                                       self.k_height,
@@ -317,20 +317,30 @@ class Convolution(Module):
         self.x_width = x.shape[1]
         self.x_height = x.shape[2]
 
-        patches = np.asarray([x[c, self.stride*j:self.stride*j+self.k_height, self.stride*k:self.stride*k+self.k_width] 
-                      for c in range(self.in_channels)
-                      for j in range(self.x_height-self.k_height+1)
-                      for k in range(self.x_width-self.k_width+1)])
-        patches = patches.reshape([self.in_channels, math.ceil(patches.shape[0]/self.in_channels), self.k_height*self.k_width])
+        patches = np.asarray([x[c, self.stride*j:self.stride*j+self.k_height,
+                                self.stride*k:self.stride*k+self.k_width]
+                              for c in range(self.in_channels)
+                              for j in range(self.x_height-self.k_height+1)
+                              for k in range(self.x_width-self.k_width+1)])
+        patches = patches.reshape([self.in_channels, math.ceil(
+            patches.shape[0]/self.in_channels),
+                                   self.k_height*self.k_width])
         # print("patches shape", patches.shape)
-        kernel_repeat = np.repeat(kernel.reshape([self.out_channels, self.in_channels, 1, self.k_height*self.k_width]), patches.shape[1], axis=2)
+        kernel_repeat = np.repeat(kernel.reshape([self.out_channels,
+                                                  self.in_channels, 1,
+                                                  self.k_height*self.k_width]),
+                                  patches.shape[1], axis=2)
         # print("kernel_repeat shape", kernel_repeat.shape)
-        result = np.asarray([np.matmul(kernel_repeat[o, c, j,:], patches[c, j,:])
+        result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
+                                       patches[c, j, :])
                              for o in range(out_channels)
                              for c in range(patches.shape[0])
                              for j in range(patches.shape[1])])
         # print("result shape", result.shape)
-        result = result.reshape([kernel_repeat.shape[0], kernel_repeat.shape[1], self.x_height-self.k_height+1, self.x_width-self.k_width+1])
+        result = result.reshape([kernel_repeat.shape[0],
+                                 kernel_repeat.shape[1],
+                                 self.x_height-self.k_height+1,
+                                 self.x_width-self.k_width+1])
         y = np.sum(result, axis=1)
         # print("y shape", y.shape)
         return y
