@@ -234,43 +234,93 @@ class Softmax(Module):
 
 # Softmax function implementation
 class Batch_Norm(Module):
-    def __init__(self, batch_size):
+    def __init__(self):
         super().__init__()
         self.type = "Batch Normalization"
         self.gamma = 1
         self.eps = 10**-100
         self.beta = 0
-        self.x_mu = 0
-        self.inv_var = 0
-        self.x_hat = 0
 
     def eq(self, x):
         return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
 
     def forward(self, x):
-        self.save = x
-        mean = np.sum(x, axis=1)/x.shape[1]
-        mean_repeated = np.repeat(mean[:, None], x.shape[1], axis=1)
-        self.x_mu = x - mean_repeated
-        var = np.sum((x-mean_repeated)**2, axis=1)/x.shape[1]
-        var_repeated = np.repeat(var[:, None], x.shape[1], axis=1)
-        self.inv_var = 1/(np.sqrt(var_repeated) + self.eps)
-        self.x_hat = self.x_mu * self.inv_var
-        norm = (x - mean_repeated)/(np.sqrt(var_repeated) + self.eps)
-        return norm*self.gamma + self.beta
-
-    def backward(self, x):
         N, D = x.shape
-        dxhat = x * self.gamma
-        dx = (1. / N) * self.inv_var * (N*dxhat - np.sum(dxhat, axis=0)
-                                        - self.x_hat*np.sum(
-                                            dxhat*self.x_hat, axis=0))
-        dbeta = np.sum(np.sum(x, axis=1))
-        dgamma = np.sum(np.sum(self.x_hat*x, axis=1))
-        # todo fix gamma update
-        # self.gamma = self.gamma - dgamma
-        # self.beta = self.beta - dbeta
+
+        # step1: calculate mean
+        mu = 1./N * np.sum(x, axis=0)
+
+        # step2: subtract mean vector of every trainings example
+        self.xmu = x - mu
+
+        # step3: following the lower branch - calculation denominator
+        sq = self.xmu ** 2
+
+        # step4: calculate variance
+        self.var = 1./N * np.sum(sq, axis=0)
+
+        # step5: add eps for numerical stability, then sqrt
+        self.sqrtvar = np.sqrt(self.var + self.eps)
+
+        # step6: invert sqrtwar
+        self.ivar = 1./self.sqrtvar
+
+        # step7: execute normalization
+        self.xhat = self.xmu * self.ivar
+
+        # step8: Nor the two transformation steps
+        gammax = self.gamma * self.xhat
+
+        # step9
+        out = gammax + self.beta
+        return out
+
+    def backward(self, dout):
+        N, D = dout.shape
+
+        # step9
+        dbeta = np.sum(dout, axis=0)
+        dgammax = dout  # not necessary, but more understandable
+
+        # step8
+        dgamma = np.sum(dgammax*self.xhat, axis=0)
+        dxhat = dgammax * self.gamma
+
+        # step7
+        divar = np.sum(dxhat*self.xmu, axis=0)
+        dxmu1 = dxhat * self.ivar
+
+        # step6
+        dsqrtvar = -1. / (self.sqrtvar ** 2) * divar
+
+        # step5
+        dvar = 0.5 * 1. / np.sqrt(self.var + self.eps) * dsqrtvar
+
+        # step4
+        dsq = 1. / N * np.ones((N, D)) * dvar
+
+        # step3
+        dxmu2 = 2 * self.xmu * dsq
+
+        # step2
+        dx1 = (dxmu1 + dxmu2)
+        dmu = -1 * np.sum(dxmu1+dxmu2, axis=0)
+
+        # step1
+        dx2 = 1. / N * np.ones((N, D)) * dmu
+
+        # step0
+        dx = dx1 + dx2
         return dx
+
+    def update(self, grad):
+        lr = self.lr
+        self.gamma = self.gamma - lr * self.inv_var.mean() * grad.mean()
+        self.beta = self.beta - lr*grad.mean()*1
+
+    def set_Lr(self, lr):
+        self.lr = lr
+        return
 
     def print(self, color=""):
         print_in_color("\tBatch normalization function", color)
@@ -463,5 +513,7 @@ class Sequential(Module):
 
     def set_Lr(self, lr=0):
         for _object in self.model:
-            if isinstance(_object, Linear):
+            try:
                 _object.set_Lr(lr)
+            except Exception as ex:
+                continue
