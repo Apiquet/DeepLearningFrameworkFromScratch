@@ -234,7 +234,7 @@ class Softmax(Module):
 
 # Softmax function implementation
 class Batch_Norm(Module):
-    def __init__(self):
+    def __init__(self, batch_size):
         super().__init__()
         self.type = "Batch Normalization"
         self.gamma = 1
@@ -257,22 +257,19 @@ class Batch_Norm(Module):
         self.inv_var = 1/(np.sqrt(var_repeated) + self.eps)
         self.x_hat = self.x_mu * self.inv_var
         norm = (x - mean_repeated)/(np.sqrt(var_repeated) + self.eps)
-        return self.gamma*norm + self.beta
+        return norm*self.gamma + self.beta
 
     def backward(self, x):
         N, D = x.shape
-
-        # intermediate partial derivatives
         dxhat = x * self.gamma
-
-        # final partial derivatives
         dx = (1. / N) * self.inv_var * (N*dxhat - np.sum(dxhat, axis=0)
                                         - self.x_hat*np.sum(
                                             dxhat*self.x_hat, axis=0))
-        dbeta = np.sum(x, axis=0)
-        dgamma = np.sum(self.x_hat*x, axis=0)
-        # self.gamma = self.gamma + dgamma
-        # self.beta = self.beta + dbeta
+        dbeta = np.sum(np.sum(x, axis=1))
+        dgamma = np.sum(np.sum(self.x_hat*x, axis=1))
+        # todo fix gamma update
+        # self.gamma = self.gamma - dgamma
+        # self.beta = self.beta - dbeta
         return dx
 
     def print(self, color=""):
