@@ -17,7 +17,8 @@ def print_current_results(epochs, Model, train_features, train_target,
 def print_in_color(message, color="red"):
     choices = {"green": "32", "blue": "34",
                "magenta": "35", "red": "31",
-               "Gray": "37", "Cyan": "36"}
+               "Gray": "37", "Cyan": "36",
+               "Black": "39"}
     if message == "-h":
         return list(choices.keys())
     elif color == "":
@@ -101,7 +102,8 @@ def get_inferences(model, data_features):
 
 # Classes
 possible_types = ["Linear", "Activation", "Loss",
-                  "Softmax", "Flatten", "Convolution"]
+                  "Softmax", "Flatten", "Convolution",
+                  "Batch_normalization"]
 
 
 # heritage module definition
@@ -233,10 +235,10 @@ class Softmax(Module):
 
 
 # Softmax function implementation
-class Batch_Norm(Module):
+class Batch_normalization(Module):
     def __init__(self):
         super().__init__()
-        self.type = "Batch Normalization"
+        self.type = "Batch_normalization"
         self.gamma = 1
         self.eps = 10**-100
         self.beta = 0
