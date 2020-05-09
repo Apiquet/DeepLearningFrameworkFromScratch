@@ -234,7 +234,7 @@ class Softmax(Module):
         return
 
 
-# Softmax function implementation
+# Batch normalization function implementation
 class Batch_normalization(Module):
     def __init__(self):
         super().__init__()
@@ -286,6 +286,7 @@ class Batch_normalization(Module):
 
         # step8
         dgamma = np.sum(dgammax*self.xhat, axis=0)
+        self.update(dgamma, dbeta)
         dxhat = dgammax * self.gamma
 
         # step7
@@ -315,10 +316,9 @@ class Batch_normalization(Module):
         dx = dx1 + dx2
         return dx
 
-    def update(self, grad):
-        lr = self.lr
-        self.gamma = self.gamma - lr * self.inv_var.mean() * grad.mean()
-        self.beta = self.beta - lr*grad.mean()*1
+    def update(self, dgamma, dbeta):
+        self.gamma = self.gamma - self.lr * dgamma
+        self.beta = self.beta - self.lr * dbeta
 
     def set_Lr(self, lr):
         self.lr = lr
