@@ -457,11 +457,16 @@ class Flatten(Module):
         self.type = "Flatten"
 
     def forward(self, x):
+        self.n = x.shape[0]
+        self.channel = x.shape[1]
+        self.width = x.shape[2]
+        self.height = x.shape[3]
         y = x.reshape([np.prod(x.shape)])
         return y
 
     def backward(self, x):
-        return x
+        y = x.reshape([self.n, self.channel, self.height, self.width])
+        return y
 
     def print(self, color=""):
         print_in_color("\tFlatten function", color)
