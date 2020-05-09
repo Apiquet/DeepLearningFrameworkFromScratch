@@ -436,7 +436,7 @@ class Convolution(Module):
                                  self.x_height-k_height+1,
                                  self.x_width-k_width+1])
         dk = np.sum(result, axis=1)
-        self.kernel = self.kernel _ self.lr*dk
+        self.kernel = self.kernel - self.lr*dk
 
     def forward(self, x):
         self.x = x
@@ -452,10 +452,11 @@ class Convolution(Module):
             patches.shape[0]/self.in_channels),
                                    self.k_height*self.k_width])
         # print("patches shape", patches.shape)
-        kernel_repeat = np.repeat(self.kernel.reshape([self.out_channels,
-                                                  self.in_channels, 1,
-                                                  self.k_height*self.k_width]),
-                                  patches.shape[1], axis=2)
+        kernel_repeat = np.repeat(
+            self.kernel.reshape([self.out_channels,
+                                 self.in_channels, 1,
+                                 self.k_height*self.k_width]),
+            patches.shape[1], axis=2)
         # print("kernel_repeat shape", kernel_repeat.shape)
         result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
                                        patches[c, j, :])
@@ -473,11 +474,12 @@ class Convolution(Module):
 
     def backward(self, grad):
         self.update(grad)
-        
+
         kernel_flipped = np.flip(self.kernel)
         padding = (grad.shape[0], self.k_height-1, self.k_width-1)
-        x = np.array([np.pad(grad[i, :, :], [padding, padding], mode='constant', constant_values=0) for i in range(grad.shape[0])])
-
+        x = np.array([np.pad(grad[i, :, :], [padding, padding],
+                             mode='constant', constant_values=0)
+                      for i in range(grad.shape[0])])
 
         patches = np.asarray([x[c, self.stride*j:self.stride*j+self.k_height,
                                 self.stride*k:self.stride*k+self.k_width]
@@ -488,10 +490,11 @@ class Convolution(Module):
             patches.shape[0]/self.in_channels),
                                    self.k_height*self.k_width])
         # print("patches shape", patches.shape)
-        kernel_repeat = np.repeat(kernel_flipped.reshape([self.out_channels,
-                                                  self.in_channels, 1,
-                                                  self.k_height*self.k_width]),
-                                  patches.shape[1], axis=2)
+        kernel_repeat = np.repeat(
+            kernel_flipped.reshape([self.out_channels,
+                                    self.in_channels, 1,
+                                    self.k_height*self.k_width]),
+            patches.shape[1], axis=2)
         # print("kernel_repeat shape", kernel_repeat.shape)
         result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
                                        patches[c, j, :])
@@ -505,7 +508,7 @@ class Convolution(Module):
                                  self.x_width-self.k_width+1])
         y = np.sum(result, axis=1)
         # print("y shape", y.shape)
-        
+
         return grad
 
     def set_Lr(self, lr):
