@@ -474,6 +474,38 @@ class Convolution(Module):
     def backward(self, grad):
         self.update(grad)
         
+        kernel_flipped = np.flip(self.kernel)
+        padding = (grad.shape[0], self.k_height-1, self.k_width-1)
+        x = np.array([np.pad(grad[i, :, :], [padding, padding], mode='constant', constant_values=0) for i in range(grad.shape[0])])
+
+
+        patches = np.asarray([x[c, self.stride*j:self.stride*j+self.k_height,
+                                self.stride*k:self.stride*k+self.k_width]
+                              for c in range(self.in_channels)
+                              for j in range(self.x_height-self.k_height+1)
+                              for k in range(self.x_width-self.k_width+1)])
+        patches = patches.reshape([self.in_channels, math.ceil(
+            patches.shape[0]/self.in_channels),
+                                   self.k_height*self.k_width])
+        # print("patches shape", patches.shape)
+        kernel_repeat = np.repeat(kernel_flipped.reshape([self.out_channels,
+                                                  self.in_channels, 1,
+                                                  self.k_height*self.k_width]),
+                                  patches.shape[1], axis=2)
+        # print("kernel_repeat shape", kernel_repeat.shape)
+        result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
+                                       patches[c, j, :])
+                             for o in range(out_channels)
+                             for c in range(patches.shape[0])
+                             for j in range(patches.shape[1])])
+        # print("result shape", result.shape)
+        result = result.reshape([kernel_repeat.shape[0],
+                                 kernel_repeat.shape[1],
+                                 self.x_height-self.k_height+1,
+                                 self.x_width-self.k_width+1])
+        y = np.sum(result, axis=1)
+        # print("y shape", y.shape)
+        
         return grad
 
     def set_Lr(self, lr):
