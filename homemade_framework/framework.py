@@ -451,17 +451,18 @@ class Convolution(Module):
 
     def backward(self, grad):
         self.update(grad)
-
-        kernel_flipped = np.flip(self.kernel)
+        k_reshaped = np.ones([kernel.shape[1], kernel.shape[0], kernel.shape[2], kernel.shape[3]])
+        for i in range(kernel.shape[0]):
+            for j in range(kernel.shape[1]):
+                k_reshaped[j, i, :, :] = np.flip(kernel[i, j, :, :])
         # todo add kernel reshape
         padding = (grad.shape[0], self.k_height-1, self.k_width-1)
         dout = np.array([np.pad(grad[i, :, :], [padding, padding],
                          mode='constant', constant_values=0)
                          for i in range(grad.shape[0])])
 
-        convolution(dout, kernel)
-
-        return grad
+        dy = convolution(dout, k_reshaped)
+        return dy
 
     def set_Lr(self, lr):
         self.lr = lr
