@@ -413,22 +413,22 @@ class Convolution(Module):
 
         patches = np.asarray([x[c, self.stride*j:self.stride*j+k_height,
                                 self.stride*k:self.stride*k+k_width]
-                              for c in range(self.in_channel)
+                              for c in range(self.in_channels)
                               for j in range(x_height-k_height+1)
                               for k in range(x_width-k_width+1)])
-        patches = patches.reshape([self.in_channel,
-                                   math.ceil(patches.shape[0]/self.in_channel),
+        patches = patches.reshape([self.in_channels,
+                                   math.ceil(patches.shape[0]/self.in_channels),
                                    k_height*k_width])
         # print("patches shape", patches.shape)
-        k_repeat = np.repeat(kernel.reshape([self.out_channel,
-                                             self.in_channel, 1,
+        k_repeat = np.repeat(kernel.reshape([self.out_channels,
+                                             self.in_channels, 1,
                                              k_height*k_width]),
                              patches.shape[1],
                              axis=2)
         # print("kernel_repeat shape", kernel_repeat.shape)
         result = np.asarray([np.matmul(k_repeat[o, c, j, :],
                                        patches[c, j, :])
-                             for o in range(self.out_channel)
+                             for o in range(self.out_channels)
                              for c in range(patches.shape[0])
                              for j in range(patches.shape[1])])
         # print("result shape", result.shape)
@@ -439,14 +439,14 @@ class Convolution(Module):
         return y
 
     def update(self, grad):
-        dk = convolution(x, grad)
+        dk = self.convolution(x, grad)
         self.kernel = self.kernel - self.lr*dk
 
     def forward(self, x):
         self.x = x
         self.x_width = x.shape[1]
         self.x_height = x.shape[2]
-        y = convolution(x, self.kernel)
+        y = self.convolution(x, self.kernel)
         return y
 
     def backward(self, grad):
@@ -461,7 +461,7 @@ class Convolution(Module):
                          mode='constant', constant_values=0)
                          for i in range(grad.shape[0])])
 
-        dy = convolution(dout, k_reshaped)
+        dy = self.convolution(dout, k_reshaped)
         return dy
 
     def set_Lr(self, lr):
@@ -476,6 +476,7 @@ class Flatten(Module):
         self.type = "Flatten"
 
     def forward(self, x):
+        print("flatten forward", x.shape)
         self.n = x.shape[0]
         self.channel = x.shape[1]
         self.width = x.shape[2]
