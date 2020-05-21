@@ -171,7 +171,6 @@ class LeakyReLU(Module):
         return
 
     def save(self):
-        print('test')
         return self.name + ';' + str(self.a)
 
 
@@ -583,8 +582,13 @@ class Sequential(Module):
         out = ""
         out = out + self.loss.save() + '\n'
         for _object in self.model:
-            print(_object)
-            print(_object.type)
             out = out + _object.save() + "\n"
         with open(path, "w") as txt_file:
             txt_file.write(out)
+
+    def load(self, path):
+        with open(path) as txt_model: 
+            lines = txt_model.readlines() 
+            for i, line in enumerate(lines):
+                print(i)
+                print(line)
