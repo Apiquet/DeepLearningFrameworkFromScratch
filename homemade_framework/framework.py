@@ -124,16 +124,17 @@ class ReLU(Module):
     def __init__(self):
         super().__init__()
         self.type = "Activation"
-        self.save = 0
+        self.name = "ReLU"
+        self.prev_x = 0
 
     def forward(self, x):
-        self.save = x
+        self.prev_x = x
         x[x < 0] = 0
         y = x
         return y
 
     def backward(self, x):
-        y = (self.save > 0).astype(float)
+        y = (self.prev_x > 0).astype(float)
         return np.multiply(y, x)
 
     def print(self, color=""):
@@ -146,11 +147,12 @@ class LeakyReLU(Module):
     def __init__(self):
         super().__init__()
         self.type = "Activation"
-        self.x = 0
+        self.name = "LeakyReLU"
+        self.prev_x = 0
         self.a = 0.01
 
     def forward(self, x):
-        self.x = x
+        self.prev_x = x
         neg = x < 0
         pos = x >= 0
         y = np.multiply(neg.astype(float), x)*self.a +\
@@ -158,8 +160,8 @@ class LeakyReLU(Module):
         return y
 
     def backward(self, x):
-        neg = self.x < 0
-        pos = self.x >= 0
+        neg = self.prev_x < 0
+        pos = self.prev_x >= 0
         y = np.multiply(neg.astype(float), x)*self.a +\
             np.multiply(pos.astype(float), x)
         return y
@@ -170,7 +172,7 @@ class LeakyReLU(Module):
 
     def save(self):
         print('test')
-        return self.type + ';' + str(self.a)
+        return self.name + ';' + str(self.a)
 
 
 # sigmoid activation function
@@ -178,18 +180,19 @@ class Sigmoid(Module):
     def __init__(self):
         super().__init__()
         self.type = "Activation"
-        self.save = 0
+        self.name = "Sigmoid"
+        self.prev_x = 0
 
     def eq(self, x):
         return 1 / (1 + np.exp(np.multiply(x, -1)))
 
     def forward(self, x):
-        self.save = x
+        self.prev_x = x
         y = self.eq(x)
         return y
 
     def backward(self, x):
-        y = np.multiply(self.eq(self.save) * (1 - self.eq(self.save)), x)
+        y = np.multiply(self.eq(self.prev_x) * (1 - self.eq(self.prev_x)), x)
         return y
 
     def print(self, color=""):
@@ -202,6 +205,7 @@ class LossMSE(Module):
     def __init__(self):
         super().__init__()
         self.type = "Loss"
+        self.name = "LossMSE"
 
     def loss(self, y, y_pred):
         loss = sum(((y_pred - y)**2).sum(axis=0))/y.shape[1]
@@ -214,7 +218,7 @@ class LossMSE(Module):
         return 2*(y_pred-y)/y.shape[1]
 
     def save(self):
-        return self.type
+        return self.name
 
 
 # Softmax function implementation
@@ -222,18 +226,18 @@ class Softmax(Module):
     def __init__(self):
         super().__init__()
         self.type = "Softmax"
-        self.x = 0
+        self.prev_x = 0
 
     def eq(self, x):
         return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
 
     def forward(self, x):
-        self.x = x
+        self.prev_x = x
         y = self.eq(x)
         return y
 
     def backward(self, x):
-        y = np.multiply(self.eq(self.x) * (1 - self.eq(self.x)), x)
+        y = np.multiply(self.eq(self.prev_x) * (1 - self.eq(self.prev_x)), x)
         return y
 
     def print(self, color=""):
@@ -347,7 +351,7 @@ class Linear(Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.type = "Linear"
-        self.x = np.zeros(out_features)
+        self.prev_x = np.zeros(out_features)
         self.in_features = in_features
         self.out_features = out_features
         stdv = 1. / math.sqrt(self.out_features)
@@ -366,7 +370,7 @@ class Linear(Module):
     def update(self, grad):
         lr = self.lr
         self.weight = self.weight -\
-            np.multiply(lr, np.matmul(np.transpose(self.x), grad))
+            np.multiply(lr, np.matmul(np.transpose(self.prev_x), grad))
         self.bias = self.bias -\
             lr*grad.mean(0).reshape([self.bias.shape[0], 1])*1
 
@@ -376,7 +380,7 @@ class Linear(Module):
         return b
 
     def forward(self, x):
-        self.x = x
+        self.prev_x = x
         return np.matmul(x, self.weight) +\
             np.transpose(np.repeat(self.bias, x.shape[0], axis=1))
 
@@ -466,11 +470,11 @@ class Convolution(Module):
         return y
 
     def update(self, grad):
-        dk = self.convolution(x, grad)
+        dk = self.convolution(self.prev_x, grad)
         self.kernel = self.kernel - self.lr*dk
 
     def forward(self, x):
-        self.x = x
+        self.prev_x = x
         self.x_width = x.shape[1]
         self.x_height = x.shape[2]
         y = self.convolution(x, self.kernel)
