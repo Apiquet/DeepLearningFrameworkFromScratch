@@ -170,8 +170,8 @@ class LeakyReLU(Module):
         print_in_color("\tLeakyReLU activation", color)
         return
 
-    def save(self):
-        return self.name + ';' + str(self.a)
+    def save(self, path, i):
+        return [self.name, self.a]
 
     def load(self, params):
         self.a = float(params.split(';')[1])
@@ -219,8 +219,8 @@ class LossMSE(Module):
     def grad(self, y, y_pred):
         return 2*(y_pred-y)/y.shape[1]
 
-    def save(self):
-        return self.name
+    def save(self, path, i):
+        return [self.name]
 
 
 # Softmax function implementation
@@ -246,8 +246,8 @@ class Softmax(Module):
         print_in_color("\tSoftmax function", color)
         return
 
-    def save(self):
-        return self.type
+    def save(self, path, i):
+        return [self.type]
 
     def load(self, params):
         return
@@ -343,8 +343,8 @@ class Batch_normalization(Module):
         self.lr = lr
         return
 
-    def save(self):
-        return self.type + ';' + str(self.gamma) + ';' + str(self.beta)
+    def save(self, path, i):
+        return [self.type, self.gamma, self.beta]
 
     def load(self, params):
         self.gamma = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
@@ -397,8 +397,8 @@ class Linear(Module):
         self.lr = lr
         return
 
-    def save(self):
-        return self.type + ';' + np.array_str(self.weight) + ';' + np.array_str(self.bias)
+    def save(self, path, i):
+        return [self.type, self.weight, self.bias]
 
     def load(self, params):
         self.weight = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
@@ -591,12 +591,9 @@ class Sequential(Module):
             except Exception as ex:
                 continue
 
-    def save(self, path='model.txt'):
-        out = ""
-        for _object in self.model:
-            out = out + _object.save() + '&'
-        with open(path, "w") as txt_file:
-            txt_file.write(out)
+    def save(self, path):
+        for i, obj in enumerate(self.model):
+            params = obj.save(path, i)
 
     def load(self, path):
         with open(path) as txt_model:
