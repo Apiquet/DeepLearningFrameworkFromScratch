@@ -171,6 +171,8 @@ class LeakyReLU(Module):
         return
 
     def save(self, path, i):
+        with open(path + self.name + '-' + i + '.txt', 'w') as file:
+            file.write(str(self.a))
         return [self.name, self.a]
 
     def load(self, params):
@@ -344,6 +346,10 @@ class Batch_normalization(Module):
         return
 
     def save(self, path, i):
+        with open(path + self.type + i + '-gamma.bin', "wb") as f:
+            self.gamma.flatten().tofile(f)
+        with open(path + self.type + i + '-beta.bin', "wb") as f:
+            self.beta.flatten().tofile(f)
         return [self.type, self.gamma, self.beta]
 
     def load(self, params):
@@ -398,6 +404,10 @@ class Linear(Module):
         return
 
     def save(self, path, i):
+        with open(path + self.type + i + '-weights.bin', "wb") as f:
+            self.weight.flatten().tofile(f)
+        with open(path + self.type + i + '-bias.bin', "wb") as f:
+            self.bias.flatten().tofile(f)
         return [self.type, self.weight, self.bias]
 
     def load(self, params):
@@ -593,10 +603,8 @@ class Sequential(Module):
 
     def save(self, path):
         for i, obj in enumerate(self.model):
-            params = obj.save(path, i)
+            params = obj.save(path, str(i))
 
     def load(self, path):
-        with open(path) as txt_model:
-            weights = txt_model.read().replace('\n', '').split('&')
-            for i, obj in enumerate(self.model):
-                obj.load(weights[i])
+        for i, obj in enumerate(self.model):
+            params = obj.load(path, str(i))
