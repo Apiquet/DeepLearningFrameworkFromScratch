@@ -580,15 +580,15 @@ class Sequential(Module):
 
     def save(self, path='model.txt'):
         out = ""
-        out = out + self.loss.save() + '\n'
+        out = out + self.loss.save() + '&'
         for _object in self.model:
-            out = out + _object.save() + "\n"
+            out = out + _object.save() + '&'
         with open(path, "w") as txt_file:
             txt_file.write(out)
 
     def load(self, path):
-        with open(path) as txt_model: 
-            lines = txt_model.readlines() 
-            for i, line in enumerate(lines):
+        with open(path) as txt_model:
+            objects = txt_model.read().replace('\n', '').split('&')
+            for i, obj in enumerate(objects):
                 print(i)
-                print(line)
+                print(obj.split(';')[0])
