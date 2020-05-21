@@ -175,8 +175,8 @@ class LeakyReLU(Module):
             file.write(str(self.a))
         return [self.name, self.a]
 
-    def load(self, params):
-        self.a = float(params.split(';')[1])
+    def load(self, path, i):
+        self.a = 0.01
 
 
 # sigmoid activation function
@@ -251,7 +251,7 @@ class Softmax(Module):
     def save(self, path, i):
         return [self.type]
 
-    def load(self, params):
+    def load(self, path, i):
         return
 
 
@@ -347,14 +347,16 @@ class Batch_normalization(Module):
 
     def save(self, path, i):
         with open(path + self.type + i + '-gamma.bin', "wb") as f:
-            self.gamma.flatten().tofile(f)
+            self.gamma.tofile(f)
         with open(path + self.type + i + '-beta.bin', "wb") as f:
-            self.beta.flatten().tofile(f)
+            self.beta.tofile(f)
         return [self.type, self.gamma, self.beta]
 
-    def load(self, params):
-        self.gamma = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
-        self.beta = np.fromstring(params.split(';')[2], dtype=float, sep=' ')
+    def load(self, path, i):
+        with open(path + self.type + i + '-gamma.bin', "rb") as f:
+            self.gamma = np.fromfile(f)
+        with open(path + self.type + i + '-beta.bin', "rb") as f:
+            self.beta = np.fromfile(f)
 
     def print(self, color=""):
         print_in_color("\tBatch normalization function", color)
@@ -404,15 +406,19 @@ class Linear(Module):
         return
 
     def save(self, path, i):
+        print(i, self.weight.shape)
         with open(path + self.type + i + '-weights.bin', "wb") as f:
-            self.weight.flatten().tofile(f)
+            self.weight.tofile(f)
         with open(path + self.type + i + '-bias.bin', "wb") as f:
-            self.bias.flatten().tofile(f)
+            self.bias.tofile(f)
         return [self.type, self.weight, self.bias]
 
-    def load(self, params):
-        self.weight = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
-        self.weight = np.fromstring(params.split(';')[2], dtype=float, sep=' ')
+    def load(self, path, i):
+        with open(path + self.type + i + '-weights.bin', "rb") as f:
+            self.weight = np.fromfile(f).reshape([self.in_features, self.out_features])
+        print(i, self.weight.shape)
+        with open(path + self.type + i + '-bias.bin', "rb") as f:
+            self.bias = np.fromfile(f).reshape([self.out_features, 1])
 
 
 # Convolutional layer
