@@ -146,11 +146,11 @@ class LeakyReLU(Module):
     def __init__(self):
         super().__init__()
         self.type = "Activation"
-        self.save = 0
+        self.x = 0
         self.a = 0.01
 
     def forward(self, x):
-        self.save = x
+        self.x = x
         neg = x < 0
         pos = x >= 0
         y = np.multiply(neg.astype(float), x)*self.a +\
@@ -158,8 +158,8 @@ class LeakyReLU(Module):
         return y
 
     def backward(self, x):
-        neg = self.save < 0
-        pos = self.save >= 0
+        neg = self.x < 0
+        pos = self.x >= 0
         y = np.multiply(neg.astype(float), x)*self.a +\
             np.multiply(pos.astype(float), x)
         return y
@@ -167,6 +167,10 @@ class LeakyReLU(Module):
     def print(self, color=""):
         print_in_color("\tLeakyReLU activation", color)
         return
+
+    def save(self):
+        print('test')
+        return self.type + ';' + str(self.a)
 
 
 # sigmoid activation function
@@ -209,29 +213,35 @@ class LossMSE(Module):
     def grad(self, y, y_pred):
         return 2*(y_pred-y)/y.shape[1]
 
+    def save(self):
+        return self.type
+
 
 # Softmax function implementation
 class Softmax(Module):
     def __init__(self):
         super().__init__()
         self.type = "Softmax"
-        self.save = 0
+        self.x = 0
 
     def eq(self, x):
         return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
 
     def forward(self, x):
-        self.save = x
+        self.x = x
         y = self.eq(x)
         return y
 
     def backward(self, x):
-        y = np.multiply(self.eq(self.save) * (1 - self.eq(self.save)), x)
+        y = np.multiply(self.eq(self.x) * (1 - self.eq(self.x)), x)
         return y
 
     def print(self, color=""):
         print_in_color("\tSoftmax function", color)
         return
+
+    def save(self):
+        return self.type
 
 
 # Batch normalization function implementation
@@ -324,6 +334,9 @@ class Batch_normalization(Module):
         self.lr = lr
         return
 
+    def save(self):
+        return self.type + ';' + str(self.gamma) + ';' + str(self.eps) + ';' + str(self.beta)
+
     def print(self, color=""):
         print_in_color("\tBatch normalization function", color)
         return
@@ -370,6 +383,10 @@ class Linear(Module):
     def set_Lr(self, lr):
         self.lr = lr
         return
+
+    def save(self):
+        return self.type + ';' + str(self.in_features) + ';' + str(self.out_features) + ';' +\
+    np.array_str(self.weight) + ';' + np.array_str(self.bias)
 
 
 # Convolutional layer
@@ -557,3 +574,13 @@ class Sequential(Module):
                 _object.set_Lr(lr)
             except Exception as ex:
                 continue
+
+    def save(self, path='model.txt'):
+        out = ""
+        out = out + self.loss.save() + '\n'
+        for _object in self.model:
+            print(_object)
+            print(_object.type)
+            out = out + _object.save() + "\n"
+        with open(path, "w") as txt_file:
+            txt_file.write(out)
