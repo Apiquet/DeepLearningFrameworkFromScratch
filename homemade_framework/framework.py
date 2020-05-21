@@ -173,6 +173,9 @@ class LeakyReLU(Module):
     def save(self):
         return self.name + ';' + str(self.a)
 
+    def load(self, params):
+        self.a = float(params.split(';')[1])
+
 
 # sigmoid activation function
 class Sigmoid(Module):
@@ -245,6 +248,9 @@ class Softmax(Module):
 
     def save(self):
         return self.type
+
+    def load(self, params):
+        return
 
 
 # Batch normalization function implementation
@@ -338,7 +344,11 @@ class Batch_normalization(Module):
         return
 
     def save(self):
-        return self.type + ';' + str(self.gamma) + ';' + str(self.eps) + ';' + str(self.beta)
+        return self.type + ';' + str(self.gamma) + ';' + str(self.beta)
+
+    def load(self, params):
+        self.gamma = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
+        self.beta = np.fromstring(params.split(';')[2], dtype=float, sep=' ')
 
     def print(self, color=""):
         print_in_color("\tBatch normalization function", color)
@@ -388,8 +398,11 @@ class Linear(Module):
         return
 
     def save(self):
-        return self.type + ';' + str(self.in_features) + ';' + str(self.out_features) + ';' +\
-    np.array_str(self.weight) + ';' + np.array_str(self.bias)
+        return self.type + ';' + np.array_str(self.weight) + ';' + np.array_str(self.bias)
+
+    def load(self, params):
+        self.weight = np.fromstring(params.split(';')[1], dtype=float, sep=' ')
+        self.weight = np.fromstring(params.split(';')[2], dtype=float, sep=' ')
 
 
 # Convolutional layer
@@ -580,7 +593,6 @@ class Sequential(Module):
 
     def save(self, path='model.txt'):
         out = ""
-        out = out + self.loss.save() + '&'
         for _object in self.model:
             out = out + _object.save() + '&'
         with open(path, "w") as txt_file:
@@ -588,7 +600,6 @@ class Sequential(Module):
 
     def load(self, path):
         with open(path) as txt_model:
-            objects = txt_model.read().replace('\n', '').split('&')
-            for i, obj in enumerate(objects):
-                print(i)
-                print(obj.split(';')[0])
+            weights = txt_model.read().replace('\n', '').split('&')
+            for i, obj in enumerate(self.model):
+                obj.load(weights[i])
