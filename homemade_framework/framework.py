@@ -118,6 +118,12 @@ class Module(object):
     def backward(self, *gradwrtoutput):
         raise NotImplementedError
 
+    def save(self, path, i):
+        return
+
+    def load(self, path, i):
+        return
+
 
 # RelU activation function
 class ReLU(Module):
@@ -144,12 +150,12 @@ class ReLU(Module):
 
 # LeakyReLU activation function
 class LeakyReLU(Module):
-    def __init__(self):
+    def __init__(self, a=0.01):
         super().__init__()
         self.type = "Activation"
         self.name = "LeakyReLU"
         self.prev_x = 0
-        self.a = 0.01
+        self.a = a
 
     def forward(self, x):
         self.prev_x = x
@@ -169,14 +175,6 @@ class LeakyReLU(Module):
     def print(self, color=""):
         print_in_color("\tLeakyReLU activation", color)
         return
-
-    def save(self, path, i):
-        with open(path + self.name + '-' + i + '.txt', 'w') as file:
-            file.write(str(self.a))
-        return [self.name, self.a]
-
-    def load(self, path, i):
-        self.a = 0.01
 
 
 # sigmoid activation function
@@ -221,9 +219,6 @@ class LossMSE(Module):
     def grad(self, y, y_pred):
         return 2*(y_pred-y)/y.shape[1]
 
-    def save(self, path, i):
-        return [self.name]
-
 
 # Softmax function implementation
 class Softmax(Module):
@@ -246,12 +241,6 @@ class Softmax(Module):
 
     def print(self, color=""):
         print_in_color("\tSoftmax function", color)
-        return
-
-    def save(self, path, i):
-        return [self.type]
-
-    def load(self, path, i):
         return
 
 
