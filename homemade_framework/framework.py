@@ -35,8 +35,7 @@ def train_homemade_model(model, num_epochs, train_features,
                          test_target, batch_size):
     start_time = datetime.now()
     # Convert train_target to one hot encoding
-    train_target_one_hot = convert_to_one_hot_labels(train_features,
-                                                     train_target)
+    train_target_one_hot = convert_to_one_hot_labels(train_target)
 
     print_current_results(0, model, train_features, train_target,
                           test_features, test_target, 0,
@@ -52,7 +51,7 @@ def train_homemade_model(model, num_epochs, train_features,
                 list(range(b*batch_size, (b+1)*batch_size))],
                                   output)
             loss_sum = loss_sum + loss.item()
-        if epochs % 30 == 0:
+        if epochs % 1 == 0:
             print_current_results(epochs + 1, model, train_features,
                                   train_target, test_features,
                                   test_target, loss_sum)
@@ -82,7 +81,7 @@ def plot_dataset(features, target):
     return plt
 
 
-def convert_to_one_hot_labels(features, target):
+def convert_to_one_hot_labels(target):
     n_values = max(target) + 1
     target_onehot = np.eye(n_values)[target]
     return target_onehot
@@ -110,7 +109,6 @@ possible_types = ["Linear", "Activation", "Loss",
 class Module(object):
     def __init__(self):
         super().__init__()
-        self.lr = 0
 
     def forward(self, *input):
         raise NotImplementedError
@@ -395,25 +393,22 @@ class Linear(Module):
         return
 
     def save(self, path, i):
-        print(i, self.weight.shape)
         with open(path + self.type + i + '-weights.bin', "wb") as f:
             self.weight.tofile(f)
         with open(path + self.type + i + '-bias.bin', "wb") as f:
             self.bias.tofile(f)
-        return [self.type, self.weight, self.bias]
 
     def load(self, path, i):
         with open(path + self.type + i + '-weights.bin', "rb") as f:
             self.weight = np.fromfile(f).reshape([self.in_features, self.out_features])
-        print(i, self.weight.shape)
         with open(path + self.type + i + '-bias.bin', "rb") as f:
             self.bias = np.fromfile(f).reshape([self.out_features, 1])
 
 
 # Convolutional layer
 class Convolution(Module):
-    def __init__(self, in_channels=1, out_channels=5,
-                 kernel_size=3, stride=1, padding=1):
+    def __init__(self, in_channels, out_channels,
+                 kernel_size, stride=0, padding=0):
         super().__init__()
         self.type = "Convolution"
         self.k_height = kernel_size
@@ -429,6 +424,7 @@ class Convolution(Module):
                                                       self.in_channels,
                                                       self.k_height,
                                                       self.k_width))
+        self.bias = np.random.uniform(-stdv, stdv, (self.out_channels, 1, 1))
 
     def print(self, color=""):
         msg = "\tConvolution feature maps: {}, kernel size: {}".format(
@@ -483,41 +479,55 @@ class Convolution(Module):
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
         y = np.sum(result, axis=2)
+        # y = np.array([y[n,:,:,:] + self.bias for n in range(y.shape[0])])
         # print("y shape", y.shape)
         return y
-
-    def update(self, grad):
-        dk = self.convolution(self.prev_x, grad)
-        self.kernel = self.kernel - self.lr*dk
 
     def forward(self, x):
         self.prev_x = x
         self.x_width = x.shape[1]
         self.x_height = x.shape[2]
         y = self.convolution(x, self.kernel)
-        # print("conv forward, k shape", self.kernel.shape)
-        # print("conv forward, y shape", y.shape)
         return y
+
+    def update(self, grad):
+        N, _, W, H = grad.shape
+        dk = np.array([self.convolution(self.prev_x, grad[:,f,:,:].reshape([N,1,W,H])) for f in range(self.out_channels)])
+        self.kernel = self.kernel - self.lr*np.sum(np.sum(dk, axis=1), axis=1).reshape(self.kernel.shape)
+        
+        db = np.zeros_like(self.bias)
+        db = np.sum(grad, axis=(0, 2, 3))
+        self.bias = self.bias - self.lr*db.reshape([self.out_channels, 1, 1])
 
     def backward(self, grad):
         self.update(grad)
-        k_reshaped = np.ones([kernel.shape[1], kernel.shape[0],
-                              kernel.shape[2], kernel.shape[3]])
-        for i in range(kernel.shape[0]):
-            for j in range(kernel.shape[1]):
-                k_reshaped[j, i, :, :] = np.flip(kernel[i, j, :, :])
+        k_reshaped = np.zeros_like(self.kernel)
+        for i in range(self.kernel.shape[-2]):
+            for j in range(self.kernel.shape[-1]):
+                k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
         # todo add kernel reshape
         padding = (grad.shape[0], self.k_height-1, self.k_width-1)
-        dout = np.array([np.pad(grad[i, :, :], [padding, padding],
+        dout = np.array([np.pad(grad[i, :, :], [self.padding, self.padding],
                          mode='constant', constant_values=0)
                          for i in range(grad.shape[0])])
 
         dy = self.convolution(dout, k_reshaped)
         return dy
-
+    
     def set_Lr(self, lr):
         self.lr = lr
         return
+
+    def save(self, path, i):
+        with open(path + self.type + i + '-weights.bin', "wb") as f:
+            self.kernel.tofile(f)
+
+    def load(self, path, i):
+        with open(path + self.type + i + '-weights.bin', "rb") as f:
+            self.kernel = np.fromfile(f).reshape([self.out_channels,
+                                                  self.in_channels,
+                                                  self.k_height,
+                                                  self.k_width])
 
 
 # Flatten function implementation
