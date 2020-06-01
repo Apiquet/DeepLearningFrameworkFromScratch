@@ -452,31 +452,28 @@ class Convolution(Module):
         k_width = kernel.shape[3]
         stride = 1
 
-        # print("x shape", x.shape)
-        # print("kernel shape", kernel.shape)
-
         patches = np.asarray([x[n, c, stride*j:stride*j+k_height,
                                 stride*k:stride*k+k_width]
                               for n in range(N)
                               for c in range(in_channel)
                               for j in range(x_height-k_height+1)
                               for k in range(x_width-k_width+1)])
-        # print("patches shape", patches.shape)
+
         patches = patches.reshape([N, in_channel,
                                    (x_height-k_height+1)*(x_width-k_width+1),
                                    k_height*k_width])
-        # print("patches shape", patches.shape)
+
         kernel_repeat = np.repeat(kernel.reshape([out_channel, in_channel, 1,
                                                   k_height*k_width]),
                                   patches.shape[2], axis=2)
-        # print("kernel_repeat shape", kernel_repeat.shape)
+
         result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
                                        patches[n, c, j, :])
                              for n in range(N)
                              for o in range(out_channel)
                              for c in range(patches.shape[1])
                              for j in range(patches.shape[2])])
-        # print("result shape", result.shape)
+
         result = result.reshape([N, kernel_repeat.shape[0],
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
@@ -511,6 +508,11 @@ class Convolution(Module):
         for i in range(self.kernel.shape[-2]):
             for j in range(self.kernel.shape[-1]):
                 k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
+        k_reshaped = k_reshaped.reshape([self.in_channels,
+                                         self.out_channels,
+                                         self.k_height,
+                                         self.k_width])
+
         npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1),
                 (self.k_width-1, self.k_width-1))
         dout = np.pad(dout, pad_width=npad, mode='constant', constant_values=0)
