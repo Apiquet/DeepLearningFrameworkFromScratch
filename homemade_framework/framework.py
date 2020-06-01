@@ -214,7 +214,7 @@ class LossMSE(Module):
     def print(self, color=""):
         print_in_color("\tMSE", color)
 
-    def grad(self, y, y_pred):
+    def derivative(self, y, y_pred):
         return 2*(y_pred-y)/y.shape[1]
 
 
@@ -372,16 +372,16 @@ class Linear(Module):
     def print_weight(self):
         print(self.weight)
 
-    def update(self, grad):
+    def update(self, dout):
         lr = self.lr
         self.weight = self.weight -\
-            np.multiply(lr, np.matmul(np.transpose(self.prev_x), grad))
+            np.multiply(lr, np.matmul(np.transpose(self.prev_x), dout))
         self.bias = self.bias -\
-            lr*grad.mean(0).reshape([self.bias.shape[0], 1])*1
+            lr*dout.mean(0).reshape([self.bias.shape[0], 1])*1
 
-    def backward(self, grad):
-        b = np.matmul(grad, np.transpose(self.weight))
-        self.update(grad)
+    def backward(self, dout):
+        b = np.matmul(dout, np.transpose(self.weight))
+        self.update(dout)
         return b
 
     def forward(self, x):
@@ -490,22 +490,22 @@ class Convolution(Module):
         y = self.convolution(x, self.kernel)
         return y
 
-    def update(self, grad):
-        N, F, W, H = grad.shape
-        mean_grad = np.mean(grad, axis=0, keepdims=True)
+    def update(self, dout):
+        N, F, W, H = dout.shape
+        mean_dout = np.mean(dout, axis=0, keepdims=True)
         mean_x = np.mean(self.prev_x, axis=0, keepdims=True)
         mean_x = np.repeat(mean_x, F, axis=1)
 
-        dk = self.convolution(mean_x, mean_grad)
+        dk = self.convolution(mean_x, mean_dout)
         dk = np.repeat(dk, self.kernel.shape[1], axis=1)
         self.kernel = self.kernel - self.lr*dk
 
         db = np.zeros_like(self.bias)
-        db = np.sum(grad, axis=(0, 2, 3))
+        db = np.sum(dout, axis=(0, 2, 3))
         self.bias = self.bias - self.lr*db.reshape(self.bias.shape)
 
-    def backward(self, grad):
-        self.update(grad)
+    def backward(self, dout):
+        self.update(dout)
 
         k_reshaped = np.zeros_like(self.kernel)
         for i in range(self.kernel.shape[-2]):
@@ -513,7 +513,7 @@ class Convolution(Module):
                 k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
         npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1),
                 (self.k_width-1, self.k_width-1))
-        dout = np.pad(grad, pad_width=npad, mode='constant', constant_values=0)
+        dout = np.pad(dout, pad_width=npad, mode='constant', constant_values=0)
 
         dy = self.convolution(dout, k_reshaped)
         return dy
@@ -566,15 +566,15 @@ class Sequential(Module):
         self.loss = loss
 
     def forward(self, x):
-        for _object in self.model:
-            x = _object.forward(x)
+        for layer in self.model:
+            x = layer.forward(x)
         return x
 
     def backward(self, y, y_pred):
         loss = self.loss.loss(y, y_pred)
-        grad_pred = self.loss.grad(y, y_pred)
-        for _object in reversed(self.model):
-            grad_pred = _object.backward(grad_pred)
+        derivative = self.loss.derivative(y, y_pred)
+        for layer in reversed(self.model):
+            derivative = layer.backward(derivative)
         return loss
 
     def print(self, print_color=True):
@@ -590,12 +590,12 @@ class Sequential(Module):
         else:
             legend = ""
         print("Model description: " + legend)
-        for _object in self.model:
+        for layer in self.model:
             if print_color:
-                _object.print(possible_colors[
-                    possible_types.index(_object.type)])
+                layer.print(possible_colors[
+                    possible_types.index(layer.type)])
             else:
-                _object.print()
+                layer.print()
         if print_color:
             self.loss.print(possible_colors[
                 possible_types.index(self.loss.type)])
@@ -603,9 +603,9 @@ class Sequential(Module):
             self.loss.print()
 
     def set_Lr(self, lr=0):
-        for _object in self.model:
+        for layer in self.model:
             try:
-                _object.set_Lr(lr)
+                layer.set_Lr(lr)
             except Exception as ex:
                 continue
 
