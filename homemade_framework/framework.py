@@ -163,15 +163,15 @@ class LeakyReLU(Module):
             np.multiply(pos.astype(float), x)
         return y
 
-    def backward(self, x):
+    def backward(self, dout):
         neg = self.prev_x < 0
         pos = self.prev_x >= 0
-        y = np.multiply(neg.astype(float), x)*self.a +\
-            np.multiply(pos.astype(float), x)
+        y = np.multiply(neg.astype(float), dout)*self.a +\
+            np.multiply(pos.astype(float), dout)
         return y
 
     def print(self, color=""):
-        print_in_color("\tLeakyReLU activation", color)
+        print_in_color("\tLeakyReLU activation, a={}".format(self.a), color)
         return
 
 
@@ -325,8 +325,8 @@ class Batch_normalization(Module):
         return dx
 
     def update(self, dgamma, dbeta):
-        self.gamma = self.gamma - self.lr * dgamma
-        self.beta = self.beta - self.lr * dbeta
+        self.gamma = self.gamma - self.lr * np.mean(dgamma)
+        self.beta = self.beta - self.lr * np.mean(dbeta)
 
     def set_Lr(self, lr):
         self.lr = lr
@@ -346,7 +346,7 @@ class Batch_normalization(Module):
             self.beta = np.fromfile(f)
 
     def print(self, color=""):
-        print_in_color("\tBatch normalization function", color)
+        print_in_color("\tBatch normalization function: a={}, b={}".format(self.gamma, self.beta), color)
         return
 
 
@@ -479,8 +479,6 @@ class Convolution(Module):
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
         y = np.sum(result, axis=2)
-        # y = np.array([y[n,:,:,:] + self.bias for n in range(y.shape[0])])
-        # print("y shape", y.shape)
         return y
 
     def forward(self, x):
@@ -491,25 +489,27 @@ class Convolution(Module):
         return y
 
     def update(self, grad):
-        N, _, W, H = grad.shape
-        dk = np.array([self.convolution(self.prev_x, grad[:,f,:,:].reshape([N,1,W,H])) for f in range(self.out_channels)])
-        self.kernel = self.kernel - self.lr*np.sum(np.sum(dk, axis=1), axis=1).reshape(self.kernel.shape)
+        N, F, W, H = grad.shape
+        mean_grad = np.mean(grad, axis=0, keepdims=True)
+        mean_x = np.mean(self.prev_x, axis=0, keepdims=True)
+        mean_x = np.repeat(mean_x, F, axis=1)
+        dk = self.convolution(mean_x, mean_grad)
+        dk = np.repeat(dk, self.kernel.shape[1], axis=1)
+        self.kernel = self.kernel - self.lr*dk
         
         db = np.zeros_like(self.bias)
         db = np.sum(grad, axis=(0, 2, 3))
-        self.bias = self.bias - self.lr*db.reshape([self.out_channels, 1, 1])
+        self.bias = self.bias - self.lr*db.reshape(self.bias.shape)
 
     def backward(self, grad):
         self.update(grad)
+  
         k_reshaped = np.zeros_like(self.kernel)
         for i in range(self.kernel.shape[-2]):
             for j in range(self.kernel.shape[-1]):
                 k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
-        # todo add kernel reshape
-        padding = (grad.shape[0], self.k_height-1, self.k_width-1)
-        dout = np.array([np.pad(grad[i, :, :], [self.padding, self.padding],
-                         mode='constant', constant_values=0)
-                         for i in range(grad.shape[0])])
+        npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1), (self.k_width-1, self.k_width-1))
+        dout = np.pad(grad, pad_width=npad, mode='constant', constant_values=0)
 
         dy = self.convolution(dout, k_reshaped)
         return dy
@@ -537,7 +537,6 @@ class Flatten(Module):
         self.type = "Flatten"
 
     def forward(self, x):
-        # print("flatten forward, x shape", x.shape)
         self.n = x.shape[0]
         self.channel = x.shape[1]
         self.width = x.shape[2]
