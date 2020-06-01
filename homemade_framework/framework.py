@@ -346,7 +346,8 @@ class Batch_normalization(Module):
             self.beta = np.fromfile(f)
 
     def print(self, color=""):
-        print_in_color("\tBatch normalization function: a={}, b={}".format(self.gamma, self.beta), color)
+        print_in_color("\tBatch normalization function: a={}, b={}".format(
+            self.gamma, self.beta), color)
         return
 
 
@@ -400,7 +401,8 @@ class Linear(Module):
 
     def load(self, path, i):
         with open(path + self.type + i + '-weights.bin', "rb") as f:
-            self.weight = np.fromfile(f).reshape([self.in_features, self.out_features])
+            self.weight = np.fromfile(f).reshape([self.in_features,
+                                                  self.out_features])
         with open(path + self.type + i + '-bias.bin', "rb") as f:
             self.bias = np.fromfile(f).reshape([self.out_features, 1])
 
@@ -493,27 +495,29 @@ class Convolution(Module):
         mean_grad = np.mean(grad, axis=0, keepdims=True)
         mean_x = np.mean(self.prev_x, axis=0, keepdims=True)
         mean_x = np.repeat(mean_x, F, axis=1)
+
         dk = self.convolution(mean_x, mean_grad)
         dk = np.repeat(dk, self.kernel.shape[1], axis=1)
         self.kernel = self.kernel - self.lr*dk
-        
+
         db = np.zeros_like(self.bias)
         db = np.sum(grad, axis=(0, 2, 3))
         self.bias = self.bias - self.lr*db.reshape(self.bias.shape)
 
     def backward(self, grad):
         self.update(grad)
-  
+
         k_reshaped = np.zeros_like(self.kernel)
         for i in range(self.kernel.shape[-2]):
             for j in range(self.kernel.shape[-1]):
                 k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
-        npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1), (self.k_width-1, self.k_width-1))
+        npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1),
+                (self.k_width-1, self.k_width-1))
         dout = np.pad(grad, pad_width=npad, mode='constant', constant_values=0)
 
         dy = self.convolution(dout, k_reshaped)
         return dy
-    
+
     def set_Lr(self, lr):
         self.lr = lr
         return
