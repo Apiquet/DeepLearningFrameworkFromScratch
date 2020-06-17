@@ -116,6 +116,9 @@ class Module(object):
     def backward(self, *gradwrtoutput):
         raise NotImplementedError
 
+    def getParametersCount(self):
+        return 0
+
     def save(self, path, i):
         return
 
@@ -332,6 +335,9 @@ class Batch_normalization(Module):
         self.lr = lr
         return
 
+    def getParametersCount(self):
+        return 2
+
     def save(self, path, i):
         with open(path + self.type + i + '-gamma.bin', "wb") as f:
             self.gamma.tofile(f)
@@ -392,6 +398,9 @@ class Linear(Module):
     def set_Lr(self, lr):
         self.lr = lr
         return
+
+    def getParametersCount(self):
+        return np.prod(self.weight.shape) + np.prod(self.bias.shape)
 
     def save(self, path, i):
         with open(path + self.type + i + '-weights.bin', "wb") as f:
@@ -524,6 +533,9 @@ class Convolution(Module):
         self.lr = lr
         return
 
+    def getParametersCount(self):
+        return np.prod(self.kernel.shape) + np.prod(self.bias.shape)
+
     def save(self, path, i):
         with open(path + self.type + i + '-weights.bin', "wb") as f:
             self.kernel.tofile(f)
@@ -610,6 +622,12 @@ class Sequential(Module):
                 layer.set_Lr(lr)
             except Exception as ex:
                 continue
+
+    def getParametersCount(self):
+        parametersCount = 0
+        for layer in reversed(self.model):
+            parametersCount = parametersCount + layer.getParametersCount()
+        return parametersCount
 
     def save(self, path):
         for i, obj in enumerate(self.model):
