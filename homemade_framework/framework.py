@@ -547,7 +547,7 @@ class Convolution(Module):
                                                   self.k_height,
                                                   self.k_width])
 
-            
+
 # Max Pooling layer
 class Max_Pooling(Module):
     def __init__(self, kernel_size):
@@ -564,7 +564,7 @@ class Max_Pooling(Module):
         x_height = x.shape[2]
         x_width = x.shape[3]
 
-        npad = ((0, 0), (0, 0), (0, x_height%2),(0, x_width%2))
+        npad = ((0, 0), (0, 0), (0, x_height % 2), (0, x_width % 2))
         x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
 
         x_n = x.shape[0]
@@ -572,14 +572,19 @@ class Max_Pooling(Module):
         x_height = x.shape[2]
         x_width = x.shape[3]
         self.x_max_idx = np.zeros(self.x_shape_origin)
-        y = np.zeros([x_n, x_depth, int(x_height/self.stride), int(x_width/self.stride)])
+        y = np.zeros([x_n, x_depth,
+                      int(x_height/self.stride), int(x_width/self.stride)])
 
         for n in range(x_n):
             for c in range(x_depth):
-                for j in range(int(x_height/self.stride)):
-                    for k in range(int(x_width/self.stride)):
-                        idx_max = np.argmax(x[n, c, self.stride*j:self.stride*j+self.kernel_size, self.stride*k:self.stride*k+self.kernel_size])
-                        idx = [int(idx_max > 1) + self.stride*j, int(idx_max == 1 or idx_max == 3) + self.stride*k]
+                for j in range(x_height//self.stride):
+                    for k in range(x_width//self.stride):
+                        i_max = np.argmax(
+                            x[n, c,
+                              self.stride*j:self.stride*j+self.kernel_size,
+                              self.stride*k:self.stride*k+self.kernel_size])
+                        idx = [int(i_max > 1) + self.stride*j,
+                               int(i_max == 1 or i_max == 3) + self.stride*k]
                         self.x_max_idx[n, c, idx[0], idx[1]] = 1
                         y[n, c, j, k] = x[n, c, idx[0], idx[1]]
         return y
@@ -595,7 +600,8 @@ class Max_Pooling(Module):
             for c in range(x_depth):
                 for j in range(int(x_height)):
                     for k in range(int(x_width)):
-                        dy[n, c, j, k] = self.x_max_idx[n, c, j, k] * dout[n, c, j//self.stride, k//self.stride]
+                        dy[n, c, j, k] = self.x_max_idx[n, c, j, k] *\
+                            dout[n, c, j//self.stride, k//self.stride]
         return dy
 
 
