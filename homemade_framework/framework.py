@@ -102,7 +102,7 @@ def get_inferences(model, data_features):
 # Classes
 possible_types = ["Linear", "Activation", "Loss",
                   "Softmax", "Flatten", "Convolution",
-                  "Batch_normalization"]
+                  "Batch_normalization", "Max_Pooling"]
 
 
 # heritage module definition
@@ -546,6 +546,57 @@ class Convolution(Module):
                                                   self.in_channels,
                                                   self.k_height,
                                                   self.k_width])
+
+            
+# Max Pooling layer
+class Max_Pooling(Module):
+    def __init__(self, kernel_size):
+        super().__init__()
+        self.type = "Max_Pooling"
+        self.kernel_size = kernel_size
+        self.stride = kernel_size
+
+    def print(self, color=""):
+        print_in_color("\tMax Pooling layer", color)
+
+    def forward(self, x):
+        self.x_shape_origin = x.shape
+        x_height = x.shape[2]
+        x_width = x.shape[3]
+
+        npad = ((0, 0), (0, 0), (0, x_height%2),(0, x_width%2))
+        x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
+
+        x_n = x.shape[0]
+        x_depth = x.shape[1]
+        x_height = x.shape[2]
+        x_width = x.shape[3]
+        self.x_max_idx = np.zeros(self.x_shape_origin)
+        y = np.zeros([x_n, x_depth, int(x_height/self.stride), int(x_width/self.stride)])
+
+        for n in range(x_n):
+            for c in range(x_depth):
+                for j in range(int(x_height/self.stride)):
+                    for k in range(int(x_width/self.stride)):
+                        idx_max = np.argmax(x[n, c, self.stride*j:self.stride*j+self.kernel_size, self.stride*k:self.stride*k+self.kernel_size])
+                        idx = [int(idx_max > 1) + self.stride*j, int(idx_max == 1 or idx_max == 3) + self.stride*k]
+                        self.x_max_idx[n, c, idx[0], idx[1]] = 1
+                        y[n, c, j, k] = x[n, c, idx[0], idx[1]]
+        return y
+
+    def backward(self, dout):
+        dy = np.zeros(self.x_shape_origin)
+        x_n = self.x_shape_origin[0]
+        x_depth = self.x_shape_origin[1]
+        x_height = self.x_shape_origin[2]
+        x_width = self.x_shape_origin[3]
+
+        for n in range(x_n):
+            for c in range(x_depth):
+                for j in range(int(x_height)):
+                    for k in range(int(x_width)):
+                        dy[n, c, j, k] = self.x_max_idx[n, c, j, k] * dout[n, c, j//self.stride, k//self.stride]
+        return dy
 
 
 # Flatten function implementation
