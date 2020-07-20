@@ -18,7 +18,7 @@ def print_in_color(message, color="red"):
     choices = {"green": "32", "blue": "34",
                "magenta": "35", "red": "31",
                "Gray": "37", "Cyan": "36",
-               "Black": "39"}
+               "Black": "39", "Yellow": "33"}
     if message == "-h":
         return list(choices.keys())
     elif color == "":
@@ -654,6 +654,8 @@ class Sequential(Module):
             print('Not enough color available, {} more\
                 needed'.format(len(possible_types) - len(possible_colors)))
             print_color = False
+            legend = ", ".join([possible_types[i] for i in
+                                range(len(possible_types))])
         elif print_color:
             legend = ", ".join([possible_types[i] + " in " +
                                 possible_colors[i] for i in
