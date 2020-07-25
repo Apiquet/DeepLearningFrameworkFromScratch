@@ -1,10 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""This script implements a Deep Learning framework
+   with the following types of modules"""
+
+__types__ = ["Linear", "Activation", "Loss",
+             "Softmax", "Flatten", "Convolution",
+             "BatchNormalization", "MaxPooling2D",
+             "AveragePooling2D"]
+
+
 from datetime import datetime
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-# Utils
 def print_current_results(epochs, model, train_features, train_target,
                           test_features, test_target, loss_sum, prefix=""):
     """Compute accuracy and print epoch number, train/test error and loss.
@@ -172,13 +183,6 @@ def get_inferences(model, data_features):
     return predicted_classes
 
 
-# Classes
-possible_types = ["Linear", "Activation", "Loss",
-                  "Softmax", "Flatten", "Convolution",
-                  "Batch_normalization", "Max_Pooling",
-                  "Average_Pooling"]
-
-
 # heritage module definition
 class Module(object):
     def __init__(self):
@@ -320,10 +324,10 @@ class Softmax(Module):
 
 
 # Batch normalization function implementation
-class Batch_normalization(Module):
+class BatchNorm(Module):
     def __init__(self):
         super().__init__()
-        self.type = "Batch_normalization"
+        self.type = "BatchNormalization"
         self.gamma = 1
         self.eps = 10**-100
         self.beta = 0
@@ -623,10 +627,10 @@ class Convolution(Module):
 
 
 # Max Pooling layer
-class Max_Pooling(Module):
+class MaxPooling2D(Module):
     def __init__(self, kernel_size):
         super().__init__()
-        self.type = "Max_Pooling"
+        self.type = "MaxPooling2D"
         self.kernel_size = kernel_size
         self.stride = kernel_size
 
@@ -680,10 +684,10 @@ class Max_Pooling(Module):
 
 
 # Average Pooling layer
-class Average_Pooling(Module):
+class AveragePooling2D(Module):
     def __init__(self, kernel_size):
         super().__init__()
-        self.type = "Average_Pooling"
+        self.type = "AveragePooling2D"
         self.kernel_size = kernel_size
         self.stride = kernel_size
 
@@ -776,28 +780,28 @@ class Sequential(Module):
 
     def print(self, print_color=True):
         possible_colors = print_in_color("-h")
-        if len(possible_colors) < len(possible_types):
+        if len(possible_colors) < len(__types__):
             print('Not enough color available, {} more\
-                needed'.format(len(possible_types) - len(possible_colors)))
+                needed'.format(len(__types__) - len(possible_colors)))
             print_color = False
-            legend = ", ".join([possible_types[i] for i in
-                                range(len(possible_types))])
+            legend = ", ".join([__types__[i] for i in
+                                range(len(__types__))])
         elif print_color:
-            legend = ", ".join([possible_types[i] + " in " +
+            legend = ", ".join([__types__[i] + " in " +
                                 possible_colors[i] for i in
-                                range(len(possible_types))])
+                                range(len(__types__))])
         else:
             legend = ""
         print("Model description: " + legend)
         for layer in self.model:
             if print_color:
                 layer.print(possible_colors[
-                    possible_types.index(layer.type)])
+                    __types__.index(layer.type)])
             else:
                 layer.print()
         if print_color:
             self.loss.print(possible_colors[
-                possible_types.index(self.loss.type)])
+                __types__.index(self.loss.type)])
         else:
             self.loss.print()
 
