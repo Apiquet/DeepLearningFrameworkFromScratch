@@ -53,7 +53,8 @@ def print_in_color(message, color="red"):
     choices = {"green": "32", "blue": "34",
                "magenta": "35", "red": "31",
                "Gray": "37", "Cyan": "36",
-               "Black": "39", "Yellow": "33"}
+               "Black": "39", "Yellow": "33",
+               "highlight": "40"}
     if message == "-h":
         return list(choices.keys())
     elif color == "":
@@ -353,10 +354,10 @@ class LossMSE(Module):
 
     def loss(self, y, y_pred):
         loss = sum(((y_pred - y)**2).sum(axis=0))/y.shape[1]
+        return loss
 
     def derivative(self, y, y_pred):
         return 2*(y_pred-y)/y.shape[1]
-        return loss
 
     def print(self, color=""):
         print_in_color("\tMSE", color)
