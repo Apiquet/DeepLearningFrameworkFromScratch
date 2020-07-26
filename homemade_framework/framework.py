@@ -70,7 +70,7 @@ def print_in_color(message, color="red"):
 
 def train_homemade_model(model, num_epochs, train_features,
                          train_target, test_features,
-                         test_target, batch_size):
+                         test_target, batch_size, print_every_n_epochs=1):
     """Train a model in mini-batch and print its results.
 
     Keyword arguments:
@@ -101,7 +101,7 @@ def train_homemade_model(model, num_epochs, train_features,
                 list(range(b*batch_size, (b+1)*batch_size))],
                                   output)
             loss_sum = loss_sum + loss.item()
-        if epochs % 1 == 0:
+        if epochs % print_every_n_epochs == 0:
             print_current_results(epochs + 1, model, train_features,
                                   train_target, test_features,
                                   test_target, loss_sum)
@@ -830,7 +830,7 @@ class MaxPooling2D(Module):
         return dy
 
     def print(self, color=""):
-        print_in_color("\tMax Pooling layer", color)
+        print_in_color("\tMax Pooling layer, size: " + str(self.kernel_size), color)
 
 
 class AveragePooling2D(Module):
@@ -892,7 +892,7 @@ class AveragePooling2D(Module):
         return dy
 
     def print(self, color=""):
-        print_in_color("\tAverage Pooling layer", color)
+        print_in_color("\tAverage Pooling layer, size: " + str(self.kernel_size), color)
 
 
 class Flatten(Module):
