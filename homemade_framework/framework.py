@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """This script implements a Deep Learning framework
-   with the following types of modules"""
+   with the following types of classes"""
 
 __types__ = ["Linear", "Activation", "Loss",
              "Softmax", "Flatten", "Convolution",
@@ -30,6 +30,7 @@ def print_current_results(epochs, model, train_features, train_target,
     loss_sum -- current loss
     prefix -- optional argument to add a prefix
     """
+
     train_error = compute_accuracy(model, train_features, train_target)
     test_error = compute_accuracy(model, test_features, test_target)
     print(prefix + "Epoch: {}, Train Error: {:.4f}%,\
@@ -44,6 +45,7 @@ def print_in_color(message, color="red"):
     message -- text to print
     color -- color wanted in choices dictionary
     """
+
     choices = {"green": "32", "blue": "34",
                "magenta": "35", "red": "31",
                "Gray": "37", "Cyan": "36",
@@ -73,6 +75,7 @@ def train_homemade_model(model, num_epochs, train_features,
     test_target -- target of the test set
     batch_size -- batch size used for mini-batch
     """
+
     start_time = datetime.now()
     # Convert train_target to one hot encoding
     train_target_one_hot = convert_to_one_hot_labels(train_target)
@@ -107,7 +110,7 @@ def train_homemade_model(model, num_epochs, train_features,
 def generate_disc_set(nb):
     """Generate dataset with nb number of samples.
     Features are tuples (i,j) with i,j in [-1,1]
-    Target is 1 if (i**2 + j**2)/pi < 0.2, 0 otherwise
+    Target is 1 if (i^2 + j^2)/pi < 0.2, 0 otherwise
     This dataset allows to train a network on a non-linear task, a circle
 
     Keyword arguments:
@@ -115,6 +118,7 @@ def generate_disc_set(nb):
     
     Return: list of features and targets
     """
+
     features = np.random.uniform(-1, 1, (nb, 2))
     target = (features[:, 0]**2 + features[:, 1]**2)/math.pi < 0.2
     return features, target.astype(int)
@@ -129,6 +133,7 @@ def plot_dataset(features, target):
     
     Return: plot object
     """
+
     fig, ax = plt.subplots(figsize=(4, 4))
     plt.title("Dataset")
     scatter = ax.scatter(features[:, 0], features[:, 1],
@@ -149,6 +154,7 @@ def convert_to_one_hot_labels(target):
     
     Return: targets converted to one-hot-label
     """
+
     n_values = max(target) + 1
     target_onehot = np.eye(n_values)[target]
     return target_onehot
@@ -164,6 +170,7 @@ def compute_accuracy(model, data_features, data_targets):
     
     Return: error results in pourcentage
     """
+
     predicted_classes = get_inferences(model, data_features)
     nb_data_errors = sum(data_targets != predicted_classes)
     return nb_data_errors/data_features.shape[0]*100
@@ -178,20 +185,39 @@ def get_inferences(model, data_features):
     
     Return: list of predictions
     """
+
     output = model.forward(data_features)
     predicted_classes = np.argmax(output, axis=1)
     return predicted_classes
 
 
-# heritage module definition
 class Module(object):
+    """Heritage class definition for all the framework's objects
+
+    Public methods:
+    __init__ -- initiate class attributes
+    forward -- apply the class forward pass
+    backward -- apply the class backward pass
+    update -- update the internal weights
+    print -- print class description
+    getParametersCount -- return number of parameters of the class
+    save -- save the class weights
+    load -- load weights to deploy a model
+    """
+
     def __init__(self):
         super().__init__()
 
-    def forward(self, *input):
+    def forward(self, *x):
         raise NotImplementedError
 
     def backward(self, *gradwrtoutput):
+        raise NotImplementedError
+
+    def update(self, *gradwrtoutput):
+        raise NotImplementedError
+
+    def print(self):
         raise NotImplementedError
 
     def getParametersCount(self):
@@ -204,8 +230,16 @@ class Module(object):
         return
 
 
-# RelU activation function
 class ReLU(Module):
+    """Activation class: ReLU
+
+    Public methods:
+    __init__ -- initiate class attributes
+    forward -- OUT = IN if in > 0, else 0
+    backward -- OUT = 1*IN if IN was > 0, else 0
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "Activation"
@@ -218,17 +252,25 @@ class ReLU(Module):
         y = x
         return y
 
-    def backward(self, x):
+    def backward(self, dout):
         y = (self.prev_x > 0).astype(float)
-        return np.multiply(y, x)
+        return np.multiply(y, dout)
 
     def print(self, color=""):
         print_in_color("\tReLU activation", color)
         return
 
 
-# LeakyReLU activation function
 class LeakyReLU(Module):
+    """Activation class: Leaky ReLU
+
+    Public methods:
+    __init__ -- set alpha attribute, default: 0.01
+    forward -- OUT = IN if in >= 0, else OUT = alpha*IN
+    backward -- OUT = 1*IN if IN was >= 0, else OUT = alpha*IN
+    print -- print class description
+    """
+
     def __init__(self, a=0.01):
         super().__init__()
         self.type = "Activation"
@@ -256,8 +298,17 @@ class LeakyReLU(Module):
         return
 
 
-# sigmoid activation function
 class Sigmoid(Module):
+    """Activation class: Sigmoid
+
+    Public methods:
+    __init__ -- initiate class attributes
+    eq -- apply Sigmoid on given data
+    forward -- OUT = 1 / (1 + exp(-IN)), IN has to be saved for backward pass
+    backward -- OUT = [Sigmoid(forward_IN) * (1 - Sigmoid(forward_IN))] * IN
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "Activation"
@@ -281,8 +332,16 @@ class Sigmoid(Module):
         return
 
 
-# MSE Loss implementation
 class LossMSE(Module):
+    """Loss MSE implementation
+
+    Public methods:
+    __init__ -- initiate class attributes
+    loss -- OUT = 1/N * SUM((y_predicted - y)^2), with N the number of samples
+    derivative -- OUT = 2*(y_predicted-y)/N, with N the number of samples
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "Loss"
@@ -290,17 +349,26 @@ class LossMSE(Module):
 
     def loss(self, y, y_pred):
         loss = sum(((y_pred - y)**2).sum(axis=0))/y.shape[1]
+
+    def derivative(self, y, y_pred):
+        return 2*(y_pred-y)/y.shape[1]
         return loss
 
     def print(self, color=""):
         print_in_color("\tMSE", color)
 
-    def derivative(self, y, y_pred):
-        return 2*(y_pred-y)/y.shape[1]
 
-
-# Softmax function implementation
 class Softmax(Module):
+    """Softmax implementation
+
+    Public methods:
+    __init__ -- initiate class attributes
+    eq -- apply Softmax on given data
+    forward -- OUT = exp(IN_i) / exp(sum(IN)), IN has to be saved for backward pass
+    backward -- OUT = [Softmax(forward_IN) * (1 - Softmax(forward_IN))] * IN
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "Softmax"
@@ -323,17 +391,30 @@ class Softmax(Module):
         return
 
 
-# Batch normalization function implementation
 class BatchNorm(Module):
+    """Batch Normalization implementation from kratzert on github.io
+    Thank you kratzert for his clear implementation of the forward and backward passes,
+    I could not do one more readable.
+    Note: this is the only class in this framework which comes from online resources    
+
+    Public methods:
+    __init__ -- initiate class attributes
+    forward -- achieve forward pass
+    backward -- achieve backward pass and update gamma and beta
+    update -- update gamma and beta with given parameters
+    set_Lr -- set learning rate used to update gamma and beta
+    getParametersCount -- return 2, for gamma and beta
+    save -- save gamma and beta to BatchNormalization-N-gamma/beta.bin files
+    load -- load gamma and beta values from previous training to deploy the model
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "BatchNormalization"
         self.gamma = 1
         self.eps = 10**-100
         self.beta = 0
-
-    def eq(self, x):
-        return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
 
     def forward(self, x):
         N, D = x.shape
@@ -435,8 +516,21 @@ class BatchNorm(Module):
         return
 
 
-# Linear layer
 class Linear(Module):
+    """Linear layer implementation
+
+    Public methods:
+    __init__ -- init IN and OUT sizes, Xavier initialization for weights and bias
+    forward -- OUT = IN * Weights + Bias
+    backward -- update Weights and Bias, return IN * Weights
+    update -- update weights and bias with given parameters
+    set_Lr -- set learning rate used to update weights and bias
+    getParametersCount -- return number of weights + number of bias
+    save -- save weights and bias to Linear-N-weights/bias.bin files
+    load -- load weights and bias values from previous training to deploy the model
+    print -- print class description
+    """
+
     def __init__(self, in_features, out_features):
         super().__init__()
         self.type = "Linear"
@@ -447,14 +541,6 @@ class Linear(Module):
         self.weight = np.random.uniform(-stdv, stdv, (self.in_features,
                                                       self.out_features))
         self.bias = np.random.uniform(-stdv, stdv, (self.out_features, 1))
-
-    def print(self, color=""):
-        msg = "\tLinear layer shape: {}".format([self.weight.shape[0],
-                                                 self.weight.shape[1]])
-        print_in_color(msg, color)
-
-    def print_weight(self):
-        print(self.weight)
 
     def update(self, dout):
         lr = self.lr
@@ -493,9 +579,31 @@ class Linear(Module):
         with open(path + self.type + i + '-bias.bin', "rb") as f:
             self.bias = np.fromfile(f).reshape([self.out_features, 1])
 
+    def print(self, color=""):
+        msg = "\tLinear layer shape: {}".format([self.weight.shape[0],
+                                                 self.weight.shape[1]])
+        print_in_color(msg, color)
 
-# Convolutional layer
+    def print_weight(self):
+        print(self.weight)
+
+
 class Convolution(Module):
+    """Convolution layer implementation   
+
+    Public methods:
+    __init__ -- init IN and OUT sizes, Xavier initialization for weights and bias
+    convolution -- apply a simple convolution
+    forward -- apply convolution and save needed data for the backward pass
+    backward -- update Weights and Bias, return dout wrt input
+    update -- update weights and bias with given parameters
+    set_Lr -- set learning rate used to update weights and bias
+    getParametersCount -- return number of weights + number of bias
+    save -- save weights and bias to Convolution-N-weights/bias.bin files
+    load -- load weights and bias values from previous training to deploy the model
+    print -- print class description
+    """
+
     def __init__(self, in_channels, out_channels,
                  kernel_size, stride=0, padding=0):
         super().__init__()
@@ -617,6 +725,8 @@ class Convolution(Module):
     def save(self, path, i):
         with open(path + self.type + i + '-weights.bin', "wb") as f:
             self.kernel.tofile(f)
+        with open(path + self.type + i + '-bias.bin', "wb") as f:
+            self.bias.tofile(f)
 
     def load(self, path, i):
         with open(path + self.type + i + '-weights.bin', "rb") as f:
@@ -624,25 +734,34 @@ class Convolution(Module):
                                                   self.in_channels,
                                                   self.k_height,
                                                   self.k_width])
+        with open(path + self.type + i + '-bias.bin', "rb") as f:
+            self.bias = np.fromfile(f).reshape([self.out_channels, 1, 1])
 
 
-# Max Pooling layer
 class MaxPooling2D(Module):
+    """Max Pooling 2D layer implementation   
+
+    Public methods:
+    __init__ -- init patch size to apply
+    forward -- apply max pooling with 2D patches, save max indexes found
+    backward -- reshape data and remap IN values to max indexes
+    print -- print class description
+    """
+
     def __init__(self, kernel_size):
         super().__init__()
         self.type = "MaxPooling2D"
         self.kernel_size = kernel_size
         self.stride = kernel_size
 
-    def print(self, color=""):
-        print_in_color("\tMax Pooling layer", color)
-
     def forward(self, x):
         self.x_shape_origin = x.shape
         x_height = x.shape[2]
         x_width = x.shape[3]
 
-        npad = ((0, 0), (0, 0), (0, x_height % 2), (0, x_width % 2))
+        npad = ((0, 0), (0, 0),
+                (0, x_height % self.kernel_size),
+                (0, x_width % self.kernel_size))
         x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
 
         x_n = x.shape[0]
@@ -682,24 +801,34 @@ class MaxPooling2D(Module):
                             dout[n, c, j//self.stride, k//self.stride]
         return dy
 
+    def print(self, color=""):
+        print_in_color("\tMax Pooling layer", color)
 
-# Average Pooling layer
+
 class AveragePooling2D(Module):
+    """Max Pooling 2D layer implementation   
+
+    Public methods:
+    __init__ -- init patch size to apply
+    forward -- apply mean pooling with 2D patches
+    backward -- reshape data, remap IN values to patch location, divide by 4
+    print -- print class description
+    """
+
     def __init__(self, kernel_size):
         super().__init__()
         self.type = "AveragePooling2D"
         self.kernel_size = kernel_size
         self.stride = kernel_size
 
-    def print(self, color=""):
-        print_in_color("\tAverage Pooling layer", color)
-
     def forward(self, x):
         self.x_shape_origin = x.shape
         x_height = x.shape[2]
         x_width = x.shape[3]
 
-        npad = ((0, 0), (0, 0), (0, x_height % 2), (0, x_width % 2))
+        npad = ((0, 0), (0, 0),
+                (0, x_height % self.kernel_size),
+                (0, x_width % self.kernel_size))
         x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
 
         x_n = x.shape[0]
@@ -734,9 +863,20 @@ class AveragePooling2D(Module):
                                               k//self.stride] / 4
         return dy
 
+    def print(self, color=""):
+        print_in_color("\tAverage Pooling layer", color)
 
-# Flatten function implementation
+
 class Flatten(Module):
+    """Flatten layer implementation to go from convolution to linear
+
+    Public methods:
+    __init__ -- initiate class attributes
+    forward -- [N, Channels, Width, Height] -> [N, Channels * Width * Height]
+    backward -- [N, Channels * Width * Height] -> [N, Channels, Width, Height]
+    print -- print class description
+    """
+
     def __init__(self):
         super().__init__()
         self.type = "Flatten"
@@ -760,6 +900,19 @@ class Flatten(Module):
 
 # Sequential architecture
 class Sequential(Module):
+    """Model implementation to add layers in sequence   
+
+    Public methods:
+    __init__ -- init list of layers and loss to use
+    forward -- apply foward pass for each layer in sequence
+    backward -- calculate loss and apply backward pass for each layer
+    set_Lr -- set learning rate to use for all layers
+    getParametersCount -- return the number of parameters of the model
+    save -- save all parameters to .bin files
+    load -- load model's parameters from previous training to deploy the model
+    print -- print class description
+    """
+
     def __init__(self, param, loss):
         super().__init__()
         self.type = "Sequential"
