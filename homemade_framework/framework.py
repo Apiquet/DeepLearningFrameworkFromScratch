@@ -22,7 +22,7 @@ import numpy as np
 
 def print_current_results(epochs, model, train_features, train_target,
                           test_features, test_target, loss_sum, prefix=""):
-    """Compute accuracy and print epoch number, train/test error and loss.
+    """Compute and save train/test error, print with epoch number and loss.
 
     Keyword arguments:
     epochs -- current epoch number
@@ -37,6 +37,8 @@ def print_current_results(epochs, model, train_features, train_target,
 
     train_error = compute_accuracy(model, train_features, train_target)
     test_error = compute_accuracy(model, test_features, test_target)
+    model.train_error.append(train_error)
+    model.test_error.append(test_error)
     print(prefix + "Epoch: {}, Train Error: {:.4f}%,\
         Test Error: {:.4f}%, Loss  {:.4f}".format(epochs, train_error,
                                                   test_error, loss_sum))
@@ -109,6 +111,27 @@ def train_homemade_model(model, num_epochs, train_features,
     print_current_results(epochs, model, train_features, train_target,
                           test_features, test_target, loss_sum,
                           prefix="After training: ")
+
+
+def learning_curves(model):
+    """Plot train and test accuracy curves.
+
+    Keyword arguments:
+    model -- neural network model
+    """
+
+    epochs = range(len(model.train_error))
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(epochs, model.train_error, 'b', label='Training error')
+    plt.plot(epochs, model.test_error, 'r', label='Validation error')
+    plt.title('Training and Validation error')
+    plt.xlabel('Epochs')
+    plt.ylabel('Error percentage')
+    ax.set_yticks(np.arange(0,100,5))
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 
 # Data Manager
@@ -923,6 +946,8 @@ class Sequential(Module):
         self.type = "Sequential"
         self.model = param
         self.loss = loss
+        self.train_error = []
+        self.test_error = []
 
     def forward(self, x):
         for layer in self.model:
