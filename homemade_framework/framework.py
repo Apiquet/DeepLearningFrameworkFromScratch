@@ -115,7 +115,7 @@ def generate_disc_set(nb):
 
     Keyword arguments:
     nb -- number of samples to generate
-    
+
     Return: list of features and targets
     """
 
@@ -130,7 +130,7 @@ def plot_dataset(features, target):
     Keyword arguments:
     features -- n tuples in [-1, 1]
     features -- n number (0 or 1)
-    
+
     Return: plot object
     """
 
@@ -151,7 +151,7 @@ def convert_to_one_hot_labels(target):
 
     Keyword arguments:
     target -- list of all the targets
-    
+
     Return: targets converted to one-hot-label
     """
 
@@ -167,7 +167,7 @@ def compute_accuracy(model, data_features, data_targets):
     model -- neural network model
     data_features -- features set
     data_targets -- targets set
-    
+
     Return: error results in pourcentage
     """
 
@@ -182,7 +182,7 @@ def get_inferences(model, data_features):
     Keyword arguments:
     model -- neural network model
     data_features -- features set
-    
+
     Return: list of predictions
     """
 
@@ -364,7 +364,7 @@ class Softmax(Module):
     Public methods:
     __init__ -- initiate class attributes
     eq -- apply Softmax on given data
-    forward -- OUT = exp(IN_i) / exp(sum(IN)), IN has to be saved for backward pass
+    forward -- OUT = exp(IN_i)/exp(sum(IN)), IN saved for backward pass
     backward -- OUT = [Softmax(forward_IN) * (1 - Softmax(forward_IN))] * IN
     print -- print class description
     """
@@ -393,9 +393,9 @@ class Softmax(Module):
 
 class BatchNorm(Module):
     """Batch Normalization implementation from kratzert on github.io
-    Thank you kratzert for his clear implementation of the forward and backward passes,
+    Thank you kratzert for his clear impl. of the forward and backward passes,
     I could not do one more readable.
-    Note: this is the only class in this framework which comes from online resources    
+    Note: this is the only class which comes from online resources
 
     Public methods:
     __init__ -- initiate class attributes
@@ -405,7 +405,7 @@ class BatchNorm(Module):
     set_Lr -- set learning rate used to update gamma and beta
     getParametersCount -- return 2, for gamma and beta
     save -- save gamma and beta to BatchNormalization-N-gamma/beta.bin files
-    load -- load gamma and beta values from previous training to deploy the model
+    load -- load gamma/beta values from previous training to deploy the model
     print -- print class description
     """
 
@@ -520,14 +520,14 @@ class Linear(Module):
     """Linear layer implementation
 
     Public methods:
-    __init__ -- init IN and OUT sizes, Xavier initialization for weights and bias
+    __init__ -- init IN/OUT sizes, Xavier initialization for weights and bias
     forward -- OUT = IN * Weights + Bias
     backward -- update Weights and Bias, return IN * Weights
     update -- update weights and bias with given parameters
     set_Lr -- set learning rate used to update weights and bias
     getParametersCount -- return number of weights + number of bias
     save -- save weights and bias to Linear-N-weights/bias.bin files
-    load -- load weights and bias values from previous training to deploy the model
+    load -- load weights and bias from previous training to deploy the model
     print -- print class description
     """
 
@@ -589,10 +589,10 @@ class Linear(Module):
 
 
 class Convolution(Module):
-    """Convolution layer implementation   
+    """Convolution layer implementation
 
     Public methods:
-    __init__ -- init IN and OUT sizes, Xavier initialization for weights and bias
+    __init__ -- init IN/OUT sizes, Xavier initialization for weights and bias
     convolution -- apply a simple convolution
     forward -- apply convolution and save needed data for the backward pass
     backward -- update Weights and Bias, return dout wrt input
@@ -600,7 +600,7 @@ class Convolution(Module):
     set_Lr -- set learning rate used to update weights and bias
     getParametersCount -- return number of weights + number of bias
     save -- save weights and bias to Convolution-N-weights/bias.bin files
-    load -- load weights and bias values from previous training to deploy the model
+    load -- load weights and bias from previous training to deploy the model
     print -- print class description
     """
 
@@ -739,7 +739,7 @@ class Convolution(Module):
 
 
 class MaxPooling2D(Module):
-    """Max Pooling 2D layer implementation   
+    """Max Pooling 2D layer implementation
 
     Public methods:
     __init__ -- init patch size to apply
@@ -806,7 +806,7 @@ class MaxPooling2D(Module):
 
 
 class AveragePooling2D(Module):
-    """Max Pooling 2D layer implementation   
+    """Max Pooling 2D layer implementation
 
     Public methods:
     __init__ -- init patch size to apply
@@ -900,7 +900,7 @@ class Flatten(Module):
 
 # Sequential architecture
 class Sequential(Module):
-    """Model implementation to add layers in sequence   
+    """Model implementation to add layers in sequence
 
     Public methods:
     __init__ -- init list of layers and loss to use
