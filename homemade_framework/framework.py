@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """This script implements a Deep Learning framework
-   with the following types of classes"""
+with the types of classes stored in __types__ variable.
+It also implements features provided by a Deep Learning Framework such as:
+saving and loading a model to deploy it, getting its number of parameters,
+drawing learning curves, printing its description.
+"""
 
 __types__ = ["Linear", "Activation", "Loss",
              "Softmax", "Flatten", "Convolution",
