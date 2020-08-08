@@ -998,7 +998,7 @@ class Sequential(Module):
 
     def getParametersCount(self):
         parametersCount = 0
-        for layer in reversed(self.model):
+        for layer in self.model:
             parametersCount = parametersCount + layer.getParametersCount()
         return parametersCount
 
