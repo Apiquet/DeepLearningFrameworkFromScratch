@@ -701,6 +701,7 @@ class Convolution(Module):
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
         y = np.sum(result, axis=2)
+        y = np.array([y[n,:,:,:] + self.bias for n in range(y.shape[0])])
         return y
 
     def forward(self, x):
