@@ -63,17 +63,17 @@ def main():
         cv2.imshow("Images viewer", frame)
 
         k = cv2.waitKey(1)
-        if k%256 == 27:
+        if k % 256 == 27:
             # ESC pressed
             print("Escape hit, closing...")
             break
-        elif k%256 == 32:
+        elif k % 256 == 32:
             # SPACE pressed
             label = label + 1
-            if label>=args.number_of_classes:
+            if label >= args.number_of_classes:
                 print("Last label done, closing...")
                 break
-        elif k%256 == ord('p'):
+        elif k % 256 == ord('p'):
             # p pressed
             if pause:
                 pause = False
@@ -81,7 +81,8 @@ def main():
                 pause = True
 
         if label > -1 and not pause:
-            img_name = args.image_name + "_{:08d}_{:02d}.png".format(img_counter, label)
+            img_name = args.image_name + "_{:08d}_{:02d}.png".format(
+                img_counter, label)
             cv2.imwrite(args.output_path + '/' + img_name, frame)
             print("{} written!".format(img_name))
             img_counter += 1
@@ -90,6 +91,7 @@ def main():
     cam.release()
 
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     main()
