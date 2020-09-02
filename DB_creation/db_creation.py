@@ -41,10 +41,36 @@ def main():
         help="Images names, default is 'image'\
              to create img_imagenumber_classenumber.png."
     )
+    parser.add_argument(
+        "-c",
+        "--crop",
+        required=False,
+        default=None,
+        type=str,
+        help="Crop image, format: MinWidth,MaxWidth,MinHeight,MaxHeight.\
+              Set -1 for the unchanged ones"
+    )
 
     args = parser.parse_args()
 
     cam = cv2.VideoCapture(0)
+    ret, frame = cam.read()
+
+    min_height, max_height = 0, frame.shape[0]
+    min_width, max_width = 0, frame.shape[1]
+    print("Cam resolution: {}x{}".format(max_width, max_height))
+    if args.crop is not None:
+        res = [int(x) for x in args.crop.split(',')]
+        if res[0] != -1:
+            min_width = res[0]
+        if res[1] != -1:
+            max_width = res[1]
+        if res[2] != -1:
+            min_height = res[2]
+        if res[3] != -1:
+            max_height = res[3]
+        print("Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
+              , {},{}".format(min_width, max_width, min_height, max_height))
 
     img_counter = 0
     pause = False
@@ -60,6 +86,8 @@ def main():
         if not ret:
             print("failed to grab frame")
             break
+        if args.crop is not None:
+            frame = frame[min_height:max_height, min_width:max_width]
         cv2.imshow("Images viewer", frame)
 
         k = cv2.waitKey(1)
