@@ -133,14 +133,16 @@ def main():
         if label > -1 and not pause:
             img_name = args.image_name + "_{:08d}_{:02d}.png".format(
                 img_counter, label)
-            frame = cv2.resize(frame,(int(frame.shape[1]/args.resize_fact),
-                                      int(frame.shape[0]//args.resize_fact)),
-                               interpolation = cv2.INTER_AREA)
+            frame = cv2.resize(frame, (int(frame.shape[1]/args.resize_fact),
+                                       int(frame.shape[0]//args.resize_fact)),
+                               interpolation=cv2.INTER_AREA)
             if args.gray:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if args.binarize:
-                frame = cv2.medianBlur(frame,5)
-                frame = cv2.adaptiveThreshold(frame,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
+                frame = cv2.medianBlur(frame, 5)
+                frame = cv2.adaptiveThreshold(frame, 255,
+                                              cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                              cv2.THRESH_BINARY, 11, 2)
             cv2.imwrite(args.output_path + '/' + img_name, frame)
             print("{} written!".format(img_name))
             img_counter += 1
