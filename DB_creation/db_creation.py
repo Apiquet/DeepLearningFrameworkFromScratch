@@ -58,6 +58,20 @@ def main():
         type=float,
         help="Divise image resolution by number specified"
     )
+    parser.add_argument(
+        "-b",
+        "--binarize",
+        required=False,
+        action="store_true",
+        help="To binarize images"
+    )
+    parser.add_argument(
+        "-g",
+        "--gray",
+        required=False,
+        action="store_true",
+        help="To save 1-channel images"
+    )
 
     args = parser.parse_args()
 
@@ -122,6 +136,11 @@ def main():
             frame = cv2.resize(frame,(int(frame.shape[1]/args.resize_fact),
                                       int(frame.shape[0]//args.resize_fact)),
                                interpolation = cv2.INTER_AREA)
+            if args.gray:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if args.binarize:
+                frame = cv2.medianBlur(frame,5)
+                frame = cv2.adaptiveThreshold(frame,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
             cv2.imwrite(args.output_path + '/' + img_name, frame)
             print("{} written!".format(img_name))
             img_counter += 1
