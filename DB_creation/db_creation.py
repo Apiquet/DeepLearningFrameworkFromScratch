@@ -50,6 +50,14 @@ def main():
         help="Crop image, format: MinWidth,MaxWidth,MinHeight,MaxHeight.\
               Set -1 for the unchanged ones"
     )
+    parser.add_argument(
+        "-r",
+        "--resize_fact",
+        required=False,
+        default=1.0,
+        type=float,
+        help="Divise image resolution by number specified"
+    )
 
     args = parser.parse_args()
 
@@ -111,6 +119,9 @@ def main():
         if label > -1 and not pause:
             img_name = args.image_name + "_{:08d}_{:02d}.png".format(
                 img_counter, label)
+            frame = cv2.resize(frame,(int(frame.shape[1]/args.resize_fact),
+                                      int(frame.shape[0]//args.resize_fact)),
+                               interpolation = cv2.INTER_AREA)
             cv2.imwrite(args.output_path + '/' + img_name, frame)
             print("{} written!".format(img_name))
             img_counter += 1
