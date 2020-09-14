@@ -11,7 +11,9 @@ Optional arguments:
 -b to binarize images
 
 Once the script is running:
-- Press SPACE to start creating the DB
+- Press SPACE to start
+- The result image will be displayed
+- Press p to start saving the images
 - The images for label 0 will be saved every 0.5s
 - Press SPACE once again to start the next label
 - Press p to pause and ESC to exit
@@ -19,6 +21,7 @@ Once the script is running:
 
 import argparse
 import cv2
+import numpy as np
 import time
 
 
@@ -79,6 +82,22 @@ def main():
         action="store_true",
         help="To save 1-channel images"
     )
+    parser.add_argument(
+        "-d",
+        "--dilate",
+        required=False,
+        default=None,
+        type=str,
+        help="Dilate option, format: kernel_size,iteration"
+    )
+    parser.add_argument(
+        "-e",
+        "--erode",
+        required=False,
+        default=None,
+        type=str,
+        help="Erode option, format: kernel_size,iteration"
+    )
 
     args = parser.parse_args()
 
@@ -102,7 +121,7 @@ def main():
               , {},{}".format(min_width, max_width, min_height, max_height))
 
     img_counter = 0
-    pause = False
+    pause = True
     label = -1
 
     print("Press SPACE to create the DB")
@@ -117,7 +136,7 @@ def main():
             break
         if args.crop is not None:
             frame = frame[min_height:max_height, min_width:max_width]
-        cv2.imshow("Images viewer", frame)
+        cv2.imshow("Original image", frame)
 
         k = cv2.waitKey(1)
         if k % 256 == 27:
@@ -137,7 +156,7 @@ def main():
             else:
                 pause = True
 
-        if label > -1 and not pause:
+        if label > -1:
             img_name = args.image_name + "_{:08d}_{:02d}.png".format(
                 img_counter, label)
             frame = cv2.resize(frame, (int(frame.shape[1]/args.resize_fact),
@@ -150,9 +169,21 @@ def main():
                 frame = cv2.adaptiveThreshold(frame, 255,
                                               cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                               cv2.THRESH_BINARY, 11, 2)
-            cv2.imwrite(args.output_path + '/' + img_name, frame)
-            print("{} written!".format(img_name))
-            img_counter += 1
+            if args.erode is not None:
+                k_size, iteration = [int(x) for x in args.erode.split(',')]
+                kernel = np.ones((k_size, k_size), np.uint8)
+                frame = cv2.erode(frame, kernel, iterations=int(iteration))
+            if args.dilate is not None:
+                k_size, iteration = [int(x) for x in args.dilate.split(',')]
+                kernel = np.ones((k_size, k_size), np.uint8)
+                frame = cv2.dilate(frame, kernel, iterations=int(iteration))
+
+            cv2.imshow("Image to save", frame)
+    
+            if not pause:
+                cv2.imwrite(args.output_path + '/' + img_name, frame)
+                print("{} written!".format(img_name))
+                img_counter += 1
             time.sleep(1)
 
     cam.release()
