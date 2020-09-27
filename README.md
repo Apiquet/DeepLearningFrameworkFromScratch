@@ -18,6 +18,7 @@ This article shows the implementation of Convolution, Flatten, Max and Mean Pool
 * Flatten layer
 * Max pooling layer
 * Mean pooling layers
+* Batch Normalization
 * Activation layers: Sigmoid, ReLU, LeakyReLU
 * Softmax
 * Loss function (MSE: Mean Squared Error)
