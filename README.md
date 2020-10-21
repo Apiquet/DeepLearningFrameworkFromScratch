@@ -2,14 +2,9 @@
 
 ## Project
 
-https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/:
+[This article](https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/) shows how to create a set of non-linearly separable data and how to implement a FCN: activation functions, linear layer, softmax, MSE loss function, training function and how to build a neural network.
 
-This article shows how to create a set of non-linearly separable data and how to implement a FCN: activation functions, linear layer, softmax, MSE loss function, training function and how to build a neural network.
-
-https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/:
-
-This article shows the implementation of Convolution, Flatten, Max and Mean Pooling layers. It will also explained how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description.
-
+[This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of Convolution, Flatten, Max and Mean Pooling layers. It will also explained how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description.
 
 ## Layer implementation:
 
