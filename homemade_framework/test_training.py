@@ -12,8 +12,11 @@ Args:
     - (OPTIONAL) -n number of samples for training (default is 1000)
     - (OPTIONAL) -t number of samples for testing (default is 1000)
 
-Example:
-    python3 test_training.py
+Examples:
+    Use default parameters:
+        python3 test_training.py
+    Use batch size of 100, 5000 training samples and 100 epochs:
+        python3 test_training.py -b 100 -n 5000 -e 100
 """
 
 import argparse
