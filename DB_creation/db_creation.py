@@ -48,7 +48,7 @@ def main():
         required=False,
         default="img",
         type=str,
-        help="Images names, default is 'image'\
+        help="Images names, default is 'img'\
              to create img_imagenumber_classenumber.png."
     )
     parser.add_argument(
@@ -83,6 +83,14 @@ def main():
         help="To save 1-channel images"
     )
     parser.add_argument(
+        "-e",
+        "--erode",
+        required=False,
+        default=None,
+        type=str,
+        help="Erode option, format: kernel_size,iteration"
+    )
+    parser.add_argument(
         "-d",
         "--dilate",
         required=False,
@@ -91,17 +99,17 @@ def main():
         help="Dilate option, format: kernel_size,iteration"
     )
     parser.add_argument(
-        "-e",
-        "--erode",
+        "-m",
+        "--camid",
         required=False,
-        default=None,
-        type=str,
-        help="Erode option, format: kernel_size,iteration"
+        default=0,
+        type=int,
+        help="Camera ID, default is 0"
     )
 
     args = parser.parse_args()
 
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(args.camid)
     ret, frame = cam.read()
 
     min_height, max_height = 0, frame.shape[0]
@@ -159,16 +167,14 @@ def main():
         if label > -1:
             img_name = args.image_name + "_{:08d}_{:02d}.png".format(
                 img_counter, label)
-            frame = cv2.resize(frame, (int(frame.shape[1]/args.resize_fact),
-                                       int(frame.shape[0]//args.resize_fact)),
-                               interpolation=cv2.INTER_AREA)
             if args.gray:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if args.binarize:
                 frame = cv2.medianBlur(frame, 5)
-                frame = cv2.adaptiveThreshold(frame, 255,
+                '''frame = cv2.adaptiveThreshold(frame, 255,
                                               cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                              cv2.THRESH_BINARY, 11, 2)
+                                              cv2.THRESH_BINARY, 11, 2)'''
+                ret, frame = cv2.threshold(frame, 100, 255, cv2.THRESH_BINARY)
             if args.erode is not None:
                 k_size, iteration = [int(x) for x in args.erode.split(',')]
                 kernel = np.ones((k_size, k_size), np.uint8)
@@ -178,8 +184,12 @@ def main():
                 kernel = np.ones((k_size, k_size), np.uint8)
                 frame = cv2.dilate(frame, kernel, iterations=int(iteration))
 
+            frame = cv2.resize(frame, (int(frame.shape[1]//args.resize_fact),
+                                       int(frame.shape[0]//args.resize_fact)),
+                               interpolation=cv2.INTER_AREA)
+
             cv2.imshow("Image to save", frame)
-    
+
             if not pause:
                 cv2.imwrite(args.output_path + '/' + img_name, frame)
                 print("{} written!".format(img_name))
