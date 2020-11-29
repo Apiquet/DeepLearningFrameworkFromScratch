@@ -107,6 +107,24 @@ def main():
         type=int,
         help="Camera ID, default is 0"
     )
+    parser.add_argument(
+        "-l",
+        "--start_label_idx",
+        required=False,
+        default=0,
+        type=int,
+        help="To start with a specific label number \
+            if some labels are already in the database"
+    )
+    parser.add_argument(
+        "-s",
+        "--start_img_idx",
+        required=False,
+        default=0,
+        type=int,
+        help="To start with a specific image number \
+            if N frames for all the labels are already in the database"
+    )
 
     args = parser.parse_args()
 
@@ -129,9 +147,9 @@ def main():
         print("Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
               , {},{}".format(min_width, max_width, min_height, max_height))
 
-    img_counter = 0
+    img_counter = args.start_img_idx
     pause = True
-    label = -1
+    label = args.start_label_idx
 
     print("Press SPACE to create the DB")
     print("The images for label 0 will be saved every 0.5s")
@@ -155,6 +173,7 @@ def main():
         elif k % 256 == 32:
             # SPACE pressed
             label = label + 1
+            img_counter = args.start_img_idx
             if label >= args.number_of_classes:
                 print("Last label done, closing...")
                 break
