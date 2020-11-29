@@ -49,7 +49,7 @@ def main():
         default="img",
         type=str,
         help="Images names, default is 'img'\
-             to create img_imagenumber_classenumber.png."
+             to create img_ImageNumber_ClassNumber.png."
     )
     parser.add_argument(
         "-c",
@@ -72,8 +72,9 @@ def main():
         "-b",
         "--binarize",
         required=False,
-        action="store_true",
-        help="To binarize images"
+        default=None,
+        type=str,
+        help="To binarize images, format for thresholding: min,max"
     )
     parser.add_argument(
         "-g",
@@ -171,10 +172,10 @@ def main():
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if args.binarize:
                 frame = cv2.medianBlur(frame, 5)
-                '''frame = cv2.adaptiveThreshold(frame, 255,
-                                              cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                              cv2.THRESH_BINARY, 11, 2)'''
-                ret, frame = cv2.threshold(frame, 100, 255, cv2.THRESH_BINARY)
+                min_thresh, max_thresh = [int(x) for x in
+                                          args.binarize.split(',')]
+                ret, frame = cv2.threshold(frame, min_thresh, max_thresh,
+                                           cv2.THRESH_BINARY)
             if args.erode is not None:
                 k_size, iteration = [int(x) for x in args.erode.split(',')]
                 kernel = np.ones((k_size, k_size), np.uint8)
