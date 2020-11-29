@@ -62,11 +62,11 @@ def main():
     )
     parser.add_argument(
         "-r",
-        "--resize_fact",
+        "--resize",
         required=False,
-        default=1.0,
-        type=float,
-        help="Divise image resolution by number specified"
+        default=None,
+        type=str,
+        help="Resize shape, format: height,width"
     )
     parser.add_argument(
         "-b",
@@ -184,9 +184,10 @@ def main():
                 kernel = np.ones((k_size, k_size), np.uint8)
                 frame = cv2.dilate(frame, kernel, iterations=int(iteration))
 
-            frame = cv2.resize(frame, (int(frame.shape[1]//args.resize_fact),
-                                       int(frame.shape[0]//args.resize_fact)),
-                               interpolation=cv2.INTER_AREA)
+            if args.resize:
+                height, width = [int(size) for size in args.resize.split(',')]
+                frame = cv2.resize(frame, (height, width),
+                                   interpolation=cv2.INTER_AREA)
 
             cv2.imshow("Image to save", frame)
 
