@@ -128,7 +128,7 @@ def learning_curves(model):
     plt.title('Training and Validation error')
     plt.xlabel('Epochs')
     plt.ylabel('Error percentage')
-    ax.set_yticks(np.arange(0,100,5))
+    ax.set_yticks(np.arange(0, 100, 5))
     plt.grid()
     plt.legend()
     plt.show()
@@ -384,6 +384,32 @@ class LossMSE(Module):
 
     def print(self, color=""):
         print_in_color("\tMSE", color)
+
+
+class LossCrossEntropy(Module):
+    """Loss Cross Entropy implementation
+
+    Public methods:
+    __init__ -- initiate class attributes
+    loss -- OUT = 1/N * SUM((y_predicted - y)^2), with N the number of samples
+    derivative -- OUT = 2*(y_predicted-y)/N, with N the number of samples
+    print -- print class description
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.type = "Loss"
+        self.name = "LossCrossEntropy"
+
+    def loss(self, y, y_pred):
+        loss = -sum((y*np.log(y_pred)).sum(axis=0))/y.shape[1]
+        return loss
+
+    def derivative(self, y, y_pred):
+        return -(y/(y_pred+0.0001))/y.shape[1]
+
+    def print(self, color=""):
+        print_in_color("\tCross Entropy", color)
 
 
 class Softmax(Module):
@@ -701,7 +727,7 @@ class Convolution(Module):
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
         y = np.sum(result, axis=2)
-        y = np.array([y[n,:,:,:] + self.bias for n in range(y.shape[0])])
+        y = np.array([y[n, :, :, :] + self.bias for n in range(y.shape[0])])
         return y
 
     def forward(self, x):
@@ -831,7 +857,8 @@ class MaxPooling2D(Module):
         return dy
 
     def print(self, color=""):
-        print_in_color("\tMax Pooling layer, size: " + str(self.kernel_size), color)
+        print_in_color("\tMax Pooling layer, size: " + str(self.kernel_size),
+                       color)
 
 
 class AveragePooling2D(Module):
@@ -893,7 +920,8 @@ class AveragePooling2D(Module):
         return dy
 
     def print(self, color=""):
-        print_in_color("\tAverage Pooling layer, size: " + str(self.kernel_size), color)
+        print_in_color(
+            "\tAverage Pooling layer, size: " + str(self.kernel_size), color)
 
 
 class Flatten(Module):
