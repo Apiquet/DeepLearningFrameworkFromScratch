@@ -4,11 +4,6 @@
 """This script records images to create a database.
 Simple usage for 3 classes:
 python db_creation.py -n 3 -o path/to/store/
-Optional arguments:
--c to crop images
--r to resize images
--g to convert images to gray scale
--b to binarize images
 
 Once the script is running:
 - Press SPACE to start
