@@ -17,7 +17,7 @@ class DBManager():
     def __init__(self):
         super(DBManager, self).__init__()
 
-    def load_data(db_path, train_ratio=0.7):
+    def load_data(db_path, train_ratio=0.7, img_is_gray=True, normalize=True):
         """
         Method to load the database
         N: number of images for a class
@@ -25,6 +25,8 @@ class DBManager():
 
         Args:
             - (str) database path
+            - (float) train ratio
+            - (bool) specify if data as only 1-channel
         Return:
             - (numpy array) images (N, C, H, W)
             - (numpy array) classes (N)
@@ -35,22 +37,22 @@ class DBManager():
         random_idx = np.arange(number_of_imgs)
         np.random.shuffle(random_idx)
 
-        train_imgs = []
-        train_labels = []
-        test_imgs = []
-        test_labels = []
+        train_imgs, train_labels = [], []
+        test_imgs, test_labels = [], []
 
         for i, idx in enumerate(random_idx):
             img_path = imgs_path[idx]
-            image = Image.open(img_path)
+            image = np.asarray(Image.open(img_path))
+            if img_is_gray:
+                image = np.expand_dims(image, 0)
             img_basename = os.path.splitext(os.path.basename(img_path))[0]
 
             if i <= train_number:
-                train_imgs.append(np.asarray(image).reshape([1, 28, 28]))
+                train_imgs.append(image)
                 train_labels.append(int(img_basename.split('_')[2]))
             else:
-                test_imgs.append(np.asarray(image).reshape([1, 28, 28]))
+                test_imgs.append(image)
                 test_labels.append(int(img_basename.split('_')[2]))
 
-        return np.array(train_imgs), np.array(train_labels),\
-            np.array(test_imgs), np.array(test_labels)
+        return np.array(train_imgs)/255., np.array(train_labels),\
+            np.array(test_imgs)/255., np.array(test_labels)
