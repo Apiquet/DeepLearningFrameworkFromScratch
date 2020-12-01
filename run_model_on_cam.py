@@ -14,6 +14,8 @@ Once the script is running:
 - Press p to pause and ESC to exit
 """
 
+from homemade_framework import framework as NN
+
 import argparse
 import cv2
 import numpy as np
@@ -23,27 +25,27 @@ import time
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-n",
-        "--number_of_classes",
-        required=True,
-        type=int,
-        help="Path to the images or a video."
-    )
-    parser.add_argument(
-        "-o",
-        "--output_path",
+        "-p",
+        "--weight_path",
         required=True,
         type=str,
-        help="Path to store images."
+        help="Path to load weights for the model."
     )
     parser.add_argument(
-        "-i",
-        "--image_name",
+        "-w",
+        "--img_width",
         required=False,
-        default="img",
-        type=str,
-        help="Images names, default is 'img'\
-             to create img_ImageNumber_ClassNumber.png."
+        default=28,
+        type=int,
+        help="Image width."
+    )
+    parser.add_argument(
+        "-n",
+        "--num_classes",
+        required=False,
+        default=7,
+        type=int,
+        help="Number of classes."
     )
     parser.add_argument(
         "-c",
@@ -101,26 +103,21 @@ def main():
         type=int,
         help="Camera ID, default is 0"
     )
-    parser.add_argument(
-        "-l",
-        "--start_label_idx",
-        required=False,
-        default=0,
-        type=int,
-        help="To start with a specific label number \
-            if some labels are already in the database"
-    )
-    parser.add_argument(
-        "-s",
-        "--start_img_idx",
-        required=False,
-        default=0,
-        type=int,
-        help="To start with a specific image number \
-            if N frames for all the labels are already in the database"
-    )
 
     args = parser.parse_args()
+    
+    input_size = args.img_width**2
+    num_class = args.num_classes
+    hidden_size = 128
+
+    # Build the model
+    model = NN.Sequential([NN.Linear(input_size, hidden_size),
+                           NN.LeakyReLU(), NN.BatchNorm(),
+                           NN.Linear(hidden_size, hidden_size),
+                           NN.LeakyReLU(), NN.BatchNorm(),
+                           NN.Linear(hidden_size, num_class),
+                           NN.Softmax()], NN.LossMSE())
+    model.load(args.weight_path)
 
     cam = cv2.VideoCapture(args.camid)
     ret, frame = cam.read()
@@ -140,15 +137,10 @@ def main():
             max_height = res[3]
         print("Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
               , {},{}".format(min_width, max_width, min_height, max_height))
-
-    img_counter = args.start_img_idx
     pause = True
-    label = args.start_label_idx
+    imgs = []
 
-    print("Press SPACE to create the DB")
-    print("The images for label 0 will be saved every 0.5s")
-    print("Press SPACE once again to start the next label")
-    print("Press p to pause and ESC to exit")
+    print("Model is running")
 
     while True:
         ret, frame = cam.read()
@@ -164,13 +156,6 @@ def main():
             # ESC pressed
             print("Escape hit, closing...")
             break
-        elif k % 256 == 32:
-            # SPACE pressed
-            label = label + 1
-            img_counter = args.start_img_idx
-            if label >= args.number_of_classes:
-                print("Last label done, closing...")
-                break
         elif k % 256 == ord('p'):
             # p pressed
             if pause:
@@ -178,9 +163,7 @@ def main():
             else:
                 pause = True
 
-        if label > -1:
-            img_name = args.image_name + "_{:08d}_{:02d}.png".format(
-                img_counter, label)
+        if not pause:
             if args.gray:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if args.binarize:
@@ -204,15 +187,18 @@ def main():
                                    interpolation=cv2.INTER_AREA)
 
             cv2.imshow("Image to save", frame)
-
-            if not pause:
-                cv2.imwrite(args.output_path + '/' + img_name, frame)
-                print("{} written!".format(img_name))
-                img_counter += 1
-            time.sleep(0.5)
+            image = np.asarray(frame)/255.
+            image = image.reshape([np.prod(image.shape)])
+            if len(imgs) < 3:
+                imgs.append(image)
+            else:
+                print(NN.get_inferences(model, np.asarray(imgs)))
+                imgs = imgs[1:]
+                imgs.append(image)
+                
+            time.sleep(1)
 
     cam.release()
-
     cv2.destroyAllWindows()
 
 

@@ -215,6 +215,7 @@ def get_inferences(model, data_features):
     """
 
     output = model.forward(data_features)
+    print(output)
     predicted_classes = np.argmax(output, axis=1)
     return predicted_classes
 
