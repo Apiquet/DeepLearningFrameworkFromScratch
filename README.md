@@ -18,7 +18,7 @@
 * Batch Normalization
 * Activation layers: Sigmoid, ReLU, LeakyReLU
 * Softmax
-* Loss function (MSE: Mean Squared Error)
+* Loss function (MSE: Mean Squared Error, Cross Entropy)
 
 ## Layer to build a neural network model:
 
@@ -38,7 +38,7 @@ cnn_model = NN.Sequential([
 	NN.BatchNorm(),
 	NN.Linear(hidden_size, num_class),
 	NN.Softmax()],
-	NN.LossMSE())
+	NN.LossCrossEntropy())
 ```
 
 ## Useful features of the framework:
