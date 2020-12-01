@@ -35,6 +35,7 @@ class DBManager():
         number_of_imgs = len(imgs_path)
         train_number = int(number_of_imgs*train_ratio)
         random_idx = np.arange(number_of_imgs)
+        np.random.seed(1)
         np.random.shuffle(random_idx)
 
         train_imgs, train_labels = [], []

@@ -219,6 +219,23 @@ def get_inferences(model, data_features):
     return predicted_classes
 
 
+def get_confusion_matrix(pred, target, n_classes):
+    """Compute the confusion matrix
+
+    Keyword arguments:
+    pred -- model prediction
+    target -- target prediction
+    n_classes -- number of classes
+
+    Return: confusion matrix in np.array
+    """
+
+    confusion_matrix = np.zeros((n_classes, n_classes), dtype=int)
+    for i in range(len(pred)):
+        confusion_matrix[pred[i]][target[i]] += 1
+    return confusion_matrix
+
+
 class Module(object):
     """Heritage class definition for all the framework's objects
 
