@@ -68,9 +68,9 @@ def print_in_color(message, color="red"):
             the list".format(choices.keys()))
 
 
-def train_homemade_model(model, num_epochs, train_features,
-                         train_target, test_features,
-                         test_target, batch_size, print_every_n_epochs=1):
+def train(model, num_epochs, train_features,
+          train_target, test_features,
+          test_target, batch_size, print_every_n_epochs=1):
     """Train a model in mini-batch and print its results.
 
     Keyword arguments:
@@ -689,7 +689,7 @@ class Convolution(Module):
         self.lr = lr
         return
 
-    def convolution(self, x, kernel):
+    def convolution(self, x, kernel, is_forward=True):
         N = x.shape[0]
         in_channel = x.shape[1]
         x_height = x.shape[2]
@@ -727,7 +727,9 @@ class Convolution(Module):
                                  kernel_repeat.shape[1],
                                  x_height-k_height+1, x_width-k_width+1])
         y = np.sum(result, axis=2)
-        y = np.array([y[n, :, :, :] + self.bias for n in range(y.shape[0])])
+        if is_forward:
+            y = np.array([y[n, :, :, :] + self.bias
+                          for n in range(y.shape[0])])
         return y
 
     def forward(self, x):
@@ -743,7 +745,7 @@ class Convolution(Module):
         mean_x = np.mean(self.prev_x, axis=0, keepdims=True)
         mean_x = np.repeat(mean_x, F, axis=1)
 
-        dk = self.convolution(mean_x, mean_dout)
+        dk = self.convolution(mean_x, mean_dout, is_forward=False)
         dk = np.repeat(dk, self.kernel.shape[1], axis=1)
         self.kernel = self.kernel - self.lr*dk
 
@@ -767,7 +769,7 @@ class Convolution(Module):
                 (self.k_width-1, self.k_width-1))
         dout = np.pad(dout, pad_width=npad, mode='constant', constant_values=0)
 
-        dy = self.convolution(dout, k_reshaped)
+        dy = self.convolution(dout, k_reshaped, is_forward=False)
         return dy
 
     def set_Lr(self, lr):
