@@ -8,6 +8,8 @@
 
 [This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of a full Deep Learning Framework with only numpy. It implements: convolution, Flatten, Max and Mean Pooling layers. It also explains how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description, getting its confusion matrix, etc.
 
+[This article](https://apiquet.com/2020/08/21/neural-network-from-scratch-part-4/) explains how the Deep Learning Framework can help to create a CNN for the task of hand sign recognition for piloting a drone. It also shows how to build a dataset for a particular task and how to deploy a trained model to perform the task.
+
 ## Layer implementation:
 
 * Linear layer
