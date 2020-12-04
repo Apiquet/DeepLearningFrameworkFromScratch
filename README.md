@@ -2,11 +2,11 @@
 
 ## Project
 
-[This article](https://apiquet.com/2020/03/28/neural-net-from-scratch-part-1/) describes how to implement a neural network from scratch. It will first explain the principle of gradient descent using the differential approach (2D example implementation), then, using the perturbation approach (3D example implementation).
+[This article](https://apiquet.com/2020/03/28/neural-net-from-scratch-part-1/) describes how to implement a gradient descent using the differential approach (2D example implementation), then, using the perturbation approach (3D example implementation).
 
-[This article](https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/) shows how to create a set of non-linearly separable data and how to implement a FCN: activation functions, linear layer, softmax, MSE loss function, training function and how to build a neural network.
+[This article](https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/) shows how to create a set of non-linearly separable data and how to implement a FCN from scratch using numpy: linear layers, activation functions, loss and training function.
 
-[This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of Convolution, Flatten, Max and Mean Pooling layers. It will also explained how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description.
+[This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of a full Deep Learning Framework with only numpy. It implements: convolution, Flatten, Max and Mean Pooling layers. It also explains how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description, getting its confusion matrix, etc.
 
 ## Layer implementation:
 
@@ -16,13 +16,12 @@
 * Max pooling layer
 * Mean pooling layers
 * Batch Normalization
-* Activation layers: Sigmoid, ReLU, LeakyReLU
-* Softmax
-* Loss function (MSE: Mean Squared Error, Cross Entropy)
+* Activation functions: Sigmoid, ReLU, LeakyReLU, Softmax
+* Loss functions (MSE: Mean Squared Error, Cross Entropy)
 
-## Layer to build a neural network model:
+## Example to build a neural network model:
 
-* Sequential module to create a neural network. Declaration of a simple CNN model with: Convolution -> LeakyReLU -> Max Pooling -> Convolution -> LeakyReLU -> Flatten -> Batch Normalization -> Linear layer -> Linear layer
+* To build a model, the Sequential module needs to be used. Here is the declaration of a simple CNN model with: Convolution -> LeakyReLU -> Max Pooling -> Convolution -> LeakyReLU -> Flatten -> Batch Normalization -> Linear layer -> Linear layer -> Softmax -> Cross Entropy Loss
 
 ```
 cnn_model = NN.Sequential([
@@ -44,16 +43,17 @@ cnn_model = NN.Sequential([
 ## Useful features of the framework:
 
 * One-hot encoding conversion
-* Training function (epoch and mini-batch)
-* Saving and loading a model to deploy it somewhere
-* Getting the number of parameters of a created model
-* Drawing learning curves
-* Printing model's description
+* Train function (epoch and mini-batch)
+* Save and load a model to deploy it somewhere
+* Get the number of parameters of a created model
+* Get the confusion matrix
+* Draw learning curves
+* Print model's description
 
 ## Example of use
 
-The following example contains an implementation and training of CNN. It also shows the save and load function to deploy the model somewhere.
+The following example contains an implementation and training of a CNN. It also shows how to save and load the weights to deploy the model somewhere.
 
-Finally, it compares with an FCN model: number of parameters / accuracy.
+Finally, there is a comparison with a FCN model.
 
 https://github.com/Apiquet/DeepLearningFrameworkFromScratch/blob/master/cnn_example.ipynb
