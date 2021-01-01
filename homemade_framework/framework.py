@@ -18,6 +18,7 @@ from datetime import datetime
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 def print_current_results(epochs, model, train_features, train_target,
@@ -215,7 +216,6 @@ def get_inferences(model, data_features):
     """
 
     output = model.forward(data_features)
-    print(output)
     predicted_classes = np.argmax(output, axis=1)
     return predicted_classes
 
@@ -1051,6 +1051,7 @@ class Sequential(Module):
         return parametersCount
 
     def save(self, path):
+        os.makedirs(path, exist_ok=True)
         for i, obj in enumerate(self.model):
             params = obj.save(path, str(i))
 

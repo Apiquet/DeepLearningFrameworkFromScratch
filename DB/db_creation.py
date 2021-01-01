@@ -1,17 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This script records images to create a database.
-Simple usage for 3 classes:
-python db_creation.py -n 3 -o path/to/store/
-
-Once the script is running:
-- Press SPACE to start
-- The result image will be displayed
-- Press p to start saving the images
-- The images for label 0 will be saved every 0.5s
-- Press SPACE once again to start the next label
-- Press p to pause and ESC to exit
+"""
+This script run a neural network model on the camera live stream.
 """
 
 import argparse

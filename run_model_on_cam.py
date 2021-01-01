@@ -1,17 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This script records images to create a database.
-Simple usage for 3 classes:
-python db_creation.py -n 3 -o path/to/store/
-
-Once the script is running:
-- Press SPACE to start
-- The result image will be displayed
-- Press p to start saving the images
-- The images for label 0 will be saved every 0.5s
-- Press SPACE once again to start the next label
-- Press p to pause and ESC to exit
+"""
+This script run neural network model on a camera live stream
 """
 
 from homemade_framework import framework as NN
@@ -103,21 +94,31 @@ def main():
         type=int,
         help="Camera ID, default is 0"
     )
+    parser.add_argument(
+        "-t",
+        "--tensorflow",
+        required=False,
+        action="store_true",
+        help="To specify if Tensorflow model is used."
+    )
 
     args = parser.parse_args()
-    
+
     input_size = args.img_width**2
     num_class = args.num_classes
     hidden_size = 128
 
-    # Build the model
-    model = NN.Sequential([NN.Linear(input_size, hidden_size),
-                           NN.LeakyReLU(), NN.BatchNorm(),
-                           NN.Linear(hidden_size, hidden_size),
-                           NN.LeakyReLU(), NN.BatchNorm(),
-                           NN.Linear(hidden_size, num_class),
-                           NN.Softmax()], NN.LossMSE())
-    model.load(args.weight_path)
+    if args.tensorflow:
+        import tensorflow as tf
+        model = tf.keras.models.load_model('models/tf_model/')
+    else:
+        model = NN.Sequential([NN.Linear(input_size, hidden_size),
+                               NN.LeakyReLU(), NN.BatchNorm(),
+                               NN.Linear(hidden_size, hidden_size),
+                               NN.LeakyReLU(), NN.BatchNorm(),
+                               NN.Linear(hidden_size, num_class),
+                               NN.Softmax()], NN.LossMSE())
+        model.load(args.weight_path)
 
     cam = cv2.VideoCapture(args.camid)
     ret, frame = cam.read()
@@ -137,7 +138,7 @@ def main():
             max_height = res[3]
         print("Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
               , {},{}".format(min_width, max_width, min_height, max_height))
-    pause = True
+    pause = False
     imgs = []
 
     print("Model is running")
@@ -186,16 +187,19 @@ def main():
                 frame = cv2.resize(frame, (height, width),
                                    interpolation=cv2.INTER_AREA)
 
-            cv2.imshow("Image to save", frame)
             image = np.asarray(frame)/255.
+            cv2.imshow("Input image for the model", frame)
             image = image.reshape([np.prod(image.shape)])
             if len(imgs) < 3:
                 imgs.append(image)
             else:
-                print(NN.get_inferences(model, np.asarray(imgs)))
+                if args.tensorflow:
+                    print(np.argmax(model(np.asarray(imgs)), axis=1))
+                else:
+                    NN.get_inferences(model, np.asarray(imgs))
                 imgs = imgs[1:]
                 imgs.append(image)
-                
+
             time.sleep(1)
 
     cam.release()
