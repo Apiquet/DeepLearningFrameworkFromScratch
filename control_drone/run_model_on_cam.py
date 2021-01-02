@@ -5,13 +5,42 @@
 This script run neural network model on a camera live stream
 """
 
-from homemade_framework import framework as NN
-
 import argparse
 import cv2
 import numpy as np
+import os
 import time
 import sys
+
+
+COMMANDS = {0: "move_forward", 1: "go_down", 2: "rot_10_deg",
+            3: "go_up", 4: "take_off", 5: "land", 6: "idle"}
+
+
+def send_command(anafi, command_id):
+    """
+    Function to send commands to an Anafi drone in function of the command id
+    """
+    if command_id not in COMMANDS:
+        raise f"Command id not in COMMANDS choices: {command_id}"
+    if COMMANDS[command_id] == "idle":
+        return
+
+    print("The following command will be sent: ", COMMANDS[command_id])
+
+    if COMMANDS[command_id] == "move_forward":
+        anafi.move_relative(dx=1, dy=0, dz=0, dradians=0)
+    if COMMANDS[command_id] == "go_down":
+        anafi.move_relative(dx=0, dy=0, dz=-0.5, dradians=0)
+    if COMMANDS[command_id] == "rot_10_deg":
+        anafi.move_relative(dx=0, dy=0, dz=0, dradians=0.785)
+    if COMMANDS[command_id] == "go_up":
+        anafi.move_relative(dx=0, dy=0, dz=0.5, dradians=0)
+    if COMMANDS[command_id] == "take_off":
+        anafi.safe_takeoff(5)
+    if COMMANDS[command_id] == "land":
+        anafi.safe_land(5)
+    return
 
 
 def main():
@@ -126,6 +155,7 @@ def main():
     sys.path.append(args.pyparrot_path)
     from pyparrot.Anafi import Anafi
     print("Connecting to drone...")
+    anafi = Anafi(drone_type="Anafi", ip_address="192.168.42.1")
     success = anafi.connect(10)
     print(success)
     print("Sleeping few seconds...")
@@ -141,8 +171,11 @@ def main():
 
     if args.tensorflow:
         import tensorflow as tf
-        model = tf.keras.models.load_model('models/tf_model/')
+        model = tf.keras.models.load_model(args.weight_path)
     else:
+        script_path = os.path.realpath(__file__)
+        sys.path.append(os.path.dirname(script_path) + "/../")
+        from homemade_framework import framework as NN
         model = NN.Sequential([NN.Linear(input_size, hidden_size),
                                NN.LeakyReLU(), NN.BatchNorm(),
                                NN.Linear(hidden_size, hidden_size),
@@ -226,16 +259,17 @@ def main():
             if len(imgs) < args.number_of_confimation:
                 imgs.append(image)
             else:
-                print("Process model on images sequence...")
                 if args.tensorflow:
                     results = np.argmax(model(np.asarray(imgs)), axis=1)
                 else:
                     results = NN.get_inferences(model, np.asarray(imgs))
-                print(results)
+                print("Model's output on buffer: ", results)
+                if np.unique(results).size == 1:
+                    send_command(anafi, results[0])
                 imgs = imgs[1:]
                 imgs.append(image)
 
-            time.sleep(1)
+            time.sleep(0.5)
 
     cam.release()
     cv2.destroyAllWindows()
