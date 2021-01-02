@@ -23,8 +23,6 @@ def send_command(anafi, command_id):
     """
     if command_id not in COMMANDS:
         raise f"Command id not in COMMANDS choices: {command_id}"
-    if COMMANDS[command_id] == "idle":
-        return
 
     print("The following command will be sent: ", COMMANDS[command_id])
 
@@ -264,12 +262,13 @@ def main():
                 else:
                     results = NN.get_inferences(model, np.asarray(imgs))
                 print("Model's output on buffer: ", results)
-                if np.unique(results).size == 1:
+                if np.unique(results).size == 1 and\
+                        COMMANDS[results[0]] != "idle":
                     send_command(anafi, results[0])
+                    imgs = []
                 imgs = imgs[1:]
                 imgs.append(image)
-
-            time.sleep(0.5)
+            time.sleep(0.3)
 
     cam.release()
     cv2.destroyAllWindows()
