@@ -11,6 +11,7 @@ import argparse
 import cv2
 import numpy as np
 import time
+import sys
 
 
 def main():
@@ -21,6 +22,13 @@ def main():
         required=True,
         type=str,
         help="Path to load weights for the model."
+    )
+    parser.add_argument(
+        "-a",
+        "--pyparrot_path",
+        required=True,
+        type=str,
+        help="Path to pyparrot module downloaded from amymcgovern on github."
     )
     parser.add_argument(
         "-w",
@@ -101,9 +109,32 @@ def main():
         action="store_true",
         help="To specify if Tensorflow model is used."
     )
+    parser.add_argument(
+        "-z",
+        "--number_of_confimation",
+        required=False,
+        default=3,
+        type=int,
+        help="Minimum number of identical commands before sending to drone."
+    )
 
     args = parser.parse_args()
 
+    """
+    Drone connection
+    """
+    sys.path.append(args.pyparrot_path)
+    from pyparrot.Anafi import Anafi
+    print("Connecting to drone...")
+    success = anafi.connect(10)
+    print(success)
+    print("Sleeping few seconds...")
+    anafi.smart_sleep(3)
+
+    """
+    Load model
+    """
+    print("Loading model...")
     input_size = args.img_width**2
     num_class = args.num_classes
     hidden_size = 128
@@ -120,6 +151,10 @@ def main():
                                NN.Softmax()], NN.LossMSE())
         model.load(args.weight_path)
 
+    """
+    Webcam process
+    """
+    print("Start webcam...")
     cam = cv2.VideoCapture(args.camid)
     ret, frame = cam.read()
 
@@ -140,8 +175,6 @@ def main():
               , {},{}".format(min_width, max_width, min_height, max_height))
     pause = False
     imgs = []
-
-    print("Model is running")
 
     while True:
         ret, frame = cam.read()
@@ -190,13 +223,15 @@ def main():
             image = np.asarray(frame)/255.
             cv2.imshow("Input image for the model", frame)
             image = image.reshape([np.prod(image.shape)])
-            if len(imgs) < 3:
+            if len(imgs) < args.number_of_confimation:
                 imgs.append(image)
             else:
+                print("Process model on images sequence...")
                 if args.tensorflow:
-                    print(np.argmax(model(np.asarray(imgs)), axis=1))
+                    results = np.argmax(model(np.asarray(imgs)), axis=1)
                 else:
-                    NN.get_inferences(model, np.asarray(imgs))
+                    results = NN.get_inferences(model, np.asarray(imgs))
+                print(results)
                 imgs = imgs[1:]
                 imgs.append(image)
 
