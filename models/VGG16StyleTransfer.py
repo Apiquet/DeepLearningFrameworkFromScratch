@@ -10,6 +10,7 @@ Content layer = conv5_2
 import numpy as np
 import sys
 import tensorflow as tf
+from tqdm import tqdm
 
 
 class VGG16StyleTransfer(tf.keras.Model):
@@ -77,8 +78,51 @@ class VGG16StyleTransfer(tf.keras.Model):
 
         self.content_layers = [self.x]
 
-        self.model = tf.keras.Model(inputs=self.inputs, outputs=self.style_layers+self.content_layers)
+        self.model = tf.keras.Model(
+            inputs=self.inputs, outputs=self.style_layers+self.content_layers)
         self.model.trainable = False
 
-    def call(self, x):
-        return self.model(x)
+    def get_features(self, data):
+        outputs = self.model(data/255)
+        def gram_calc(data):
+            return tf.linalg.einsum('bijc,bijd->bcd', data, data) /\
+                tf.cast(data.shape[1] * data.shape[2], tf.float32)     
+        style_features = [gram_calc(layer) for layer in outputs[:-1]]
+        return style_features, outputs[-1]
+
+    def get_loss(self, style_target, style_feature, content_target, content_feature):
+        style_loss = tf.add_n([
+            tf.reduce_mean(tf.square(features - targets))
+            for features, targets in zip(style_feature, style_target)])
+        content_loss = tf.add_n([
+            0.5 * tf.reduce_sum(tf.square(features - targets))
+            for features, targets in zip(style_feature, style_target)])
+
+        return 0.2 * style_loss + 0.001 * content_loss
+
+    def training(self, style_image, content_image, optimizer, epochs=1):
+        images = []
+
+        style_targets, _ = self.get_features(style_image)
+        _, content_targets = self.get_features(content_image)
+
+        generated_image = tf.cast(content_image, dtype=tf.float32)
+        generated_image = tf.Variable(generated_image) 
+
+        images.append(tf.keras.preprocessing.image.array_to_img(tf.squeeze(content_image)))
+        for n in tqdm(range(epochs)):
+            with tf.GradientTape() as tape:
+                style_features, content_features = self.get_features(generated_image)
+                loss = self.get_loss(style_targets, style_features, content_targets, content_features)
+
+            gradients = tape.gradient(loss, generated_image)
+            optimizer.apply_gradients([(gradients, generated_image)])
+            generated_image.assign(
+              tf.clip_by_value(generated_image, clip_value_min=0.0, clip_value_max=255.0))
+
+            tmp_img = tf.Variable(generated_image)
+            images.append(tf.keras.preprocessing.image.array_to_img(tf.squeeze(tmp_img)))
+        return images
+
+    def call(self, style_image, content_image, optimizer, epochs=1):
+        return self.training(style_image, content_image, optimizer, epochs)
