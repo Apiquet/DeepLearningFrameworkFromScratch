@@ -7,7 +7,10 @@ Style layers = first 6 layers
 Content layer = conv5_2
 """
 
+import cv2
+import imageio
 import numpy as np
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 import sys
 import tensorflow as tf
 from tqdm import tqdm
@@ -126,3 +129,60 @@ class VGG16StyleTransfer(tf.keras.Model):
 
     def call(self, style_image, content_image, optimizer, epochs=1):
         return self.training(style_image, content_image, optimizer, epochs)
+
+    def inferOnVideo(self, style_image, optimizer, epochs,
+                     video_path, out_gif, start_idx=0, end_idx=-1,
+                     skip=1, resize=None, fps=30):
+        """
+        Method to infer model on a MP4 video
+        Create a gif with the results
+        Infer SSD from models/SSD300.py on each image in sequence
+        Tracker from models.NaiveTracker can be used to keep IDs on the subjects
+
+        Args:
+            - (tf.python.framework.ops.EagerTensor) Style image
+            - (tf.keras.optimizers) Optimizer to use
+            - (int) number of epoch
+            - (str) video path (MP4)
+            - (str) out_gif: output path (.gif)
+            - (int) start_idx: start frame idx, default is 0
+            - (int) end_idx: end frame idx, default is -1
+            - (int) skip: idx%skip != 0 is skipped
+            - (tuple) resize: target resolution for the gif
+            - (int) fps: fps of the output gif
+        """
+        cap = cv2.VideoCapture(video_path)
+        imgs = []
+        i = 0
+        number_of_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if end_idx != -1:
+            number_of_frame = end_idx
+        for _ in tqdm(range(number_of_frame)):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            i += 1
+            if i <= start_idx:
+                continue
+            elif end_idx >= 0 and i > end_idx:
+                break
+            if i % skip != 0:
+                continue
+            img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            img_model = tf.image.resize(np.array(img), (300, 300)) / 255.
+            img_model = tf.convert_to_tensor(img_model, dtype=tf.float32)
+            img_model = tf.expand_dims(img_model, 0)
+
+            if resize:
+                img.thumbnail(resize, Image.ANTIALIAS)
+            orig_height, orig_width = img.size[1], img.size[0]
+            line_width = int(0.006 * orig_width)
+            font = ImageFont.truetype("arial.ttf", line_width*10)
+
+            image_result = self.model(img_model)[-1]
+            image_result = image_result.thumbnail(
+                (orig_height, orig_width), Image.ANTIALIAS)
+            imgs.append(image_results)
+        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:],save_all=True, loop=0)
+        gif = imageio.mimread(out_gif)
+        imageio.mimsave(out_gif, gif, fps=fps)
