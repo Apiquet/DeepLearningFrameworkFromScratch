@@ -113,7 +113,7 @@ class VGG16StyleTransfer(tf.keras.Model):
         generated_image = tf.Variable(generated_image) 
 
         images.append(tf.keras.preprocessing.image.array_to_img(tf.squeeze(content_image)))
-        for n in tqdm(range(epochs)):
+        for n in tqdm(range(epochs), position=0, leave=True):
             with tf.GradientTape() as tape:
                 style_features, content_features = self.get_features(generated_image)
                 loss = self.get_loss(style_targets, style_features, content_targets, content_features)
@@ -151,13 +151,15 @@ class VGG16StyleTransfer(tf.keras.Model):
             - (tuple) resize: target resolution for the gif
             - (int) fps: fps of the output gif
         """
+        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(tf.squeeze(style_image))
+
         cap = cv2.VideoCapture(video_path)
         imgs = []
         i = 0
         number_of_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if end_idx != -1:
             number_of_frame = end_idx
-        for _ in tqdm(range(number_of_frame)):
+        for _ in tqdm(range(number_of_frame), position=0, leave=True):
             ret, frame = cap.read()
             if not ret:
                 break
@@ -169,20 +171,39 @@ class VGG16StyleTransfer(tf.keras.Model):
             if i % skip != 0:
                 continue
             img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            img_model = tf.image.resize(np.array(img), (300, 300)) / 255.
-            img_model = tf.convert_to_tensor(img_model, dtype=tf.float32)
-            img_model = tf.expand_dims(img_model, 0)
+            orig_height, orig_width = img.size[0], img.size[1]
 
-            if resize:
-                img.thumbnail(resize, Image.ANTIALIAS)
-            orig_height, orig_width = img.size[1], img.size[0]
-            line_width = int(0.006 * orig_width)
-            font = ImageFont.truetype("arial.ttf", line_width*10)
+            line_width = int(0.0025 * orig_width)
+            font = ImageFont.truetype("arial.ttf", line_width*9)
 
-            image_result = self.model(img_model)[-1]
-            image_result = image_result.thumbnail(
-                (orig_height, orig_width), Image.ANTIALIAS)
-            imgs.append(image_results)
-        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:],save_all=True, loop=0)
+            content_image = np.array(img)
+            content_image = cv2.resize(
+                content_image, (300, 300), interpolation=cv2.INTER_NEAREST)
+            content_image = tf.expand_dims(
+                tf.convert_to_tensor(content_image, dtype=tf.float32), 0)
+
+            image_result = self.training(
+                style_image, content_image, optimizer, epochs)[-1]
+
+            image_result = image_result.resize(resize, Image.ANTIALIAS)
+
+            style_resize_ratio = int(orig_height/resize[0]*0.8)
+            min_style_image = style_image_on_gif.resize(
+                (int(style_image_on_gif.size[0]//style_resize_ratio),
+                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+
+            min_img_size = (resize[0]//3, resize[1]//3)
+            image_result.paste(img.resize(min_img_size, Image.ANTIALIAS), (0, image_result.size[1]-min_img_size[1]))
+            image_result.paste(min_style_image, (0, image_result.size[1]-min_img_size[1]-min_style_image.size[1]))
+
+            draw = ImageDraw.Draw(image_result)
+            draw.text((0, image_result.size[1]-min_img_size[1]),
+                      "Initial image", font=font, fill=(255, 255, 255))
+            
+            draw.text((0, image_result.size[1]-min_img_size[1]-min_style_image.size[1]),
+                      "Style image", font=font, fill=(255, 255, 255))
+            imgs.append(image_result)
+
+        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:], save_all=True, loop=0)
         gif = imageio.mimread(out_gif)
         imageio.mimsave(out_gif, gif, fps=fps)
