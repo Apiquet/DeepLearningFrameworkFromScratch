@@ -130,9 +130,9 @@ class VGG16StyleTransfer(tf.keras.Model):
     def call(self, style_image, content_image, optimizer, epochs=1):
         return self.training(style_image, content_image, optimizer, epochs)
 
-    def inferOnVideo(self, style_image, optimizer, epochs,
+    def inferOnVideo(self, style_image_path, optimizer, epochs,
                      video_path, out_gif, start_idx=0, end_idx=-1,
-                     skip=1, resize=None, fps=30, txt=None,
+                     skip=1, resize=None, fps=30,
                      add_content_img=False, add_style_img=False):
         """
         Method to infer model on a MP4 video
@@ -141,7 +141,7 @@ class VGG16StyleTransfer(tf.keras.Model):
         Tracker from models.NaiveTracker can be used to keep IDs on the subjects
 
         Args:
-            - (tf.python.framework.ops.EagerTensor) Style image
+            - (str) style_image_path: path to the style image
             - (tf.keras.optimizers) Optimizer to use
             - (int) number of epoch
             - (str) video path (MP4)
@@ -151,7 +151,15 @@ class VGG16StyleTransfer(tf.keras.Model):
             - (int) skip: idx%skip != 0 is skipped
             - (tuple) resize: target resolution for the gif
             - (int) fps: fps of the output gif
+            - (bool) add_content_img: add the content image on bottom left of result
+            - (bool) add_style_img: add style image on bottom left of result
         """
+        style_image = Image.open(style_image_path)
+        style_image = np.array(style_image)
+        style_image = cv2.resize(style_image, (300, 300),
+                                   interpolation=cv2.INTER_NEAREST)
+        style_image = tf.expand_dims(tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
+
         style_image_on_gif = tf.keras.preprocessing.image.array_to_img(tf.squeeze(style_image))
 
         cap = cv2.VideoCapture(video_path)
@@ -175,6 +183,8 @@ class VGG16StyleTransfer(tf.keras.Model):
                 continue
             img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             orig_height, orig_width = img.size[0], img.size[1]
+            if resize is None:
+                resize = (img.size[0], img.size[1])
 
             content_image = np.array(img)
             content_image = cv2.resize(
@@ -197,7 +207,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
             if not add_content_img and add_style_img:
-                style_resize_ratio = int(orig_height/resize[0]*0.8)
+                style_resize_ratio = int(round(orig_height/resize[0]*0.8))
                 pil_style = style_image_on_gif.resize(
                     (int(style_image_on_gif.size[0]//style_resize_ratio),
                     int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
@@ -216,7 +226,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
                 image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
-                style_resize_ratio = int(orig_height/resize[0]*0.8)
+                style_resize_ratio = int(round(orig_height/resize[0]*0.8))
                 pil_style = style_image_on_gif.resize(
                     (int(style_image_on_gif.size[0]//style_resize_ratio),
                     int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
@@ -231,3 +241,87 @@ class VGG16StyleTransfer(tf.keras.Model):
         imgs[0].save(out_gif, format='GIF', append_images=imgs[1:], save_all=True, loop=0)
         gif = imageio.mimread(out_gif)
         imageio.mimsave(out_gif, gif, fps=fps)
+
+        
+
+    def inferOnImage(self, style_image_path, optimizer, epochs,
+                     image_path, out_path, resize=None,
+                     add_content_img=False, add_style_img=False):
+        """
+        Method to infer model on a MP4 video
+        Create a gif with the results
+        Infer SSD from models/SSD300.py on each image in sequence
+        Tracker from models.NaiveTracker can be used to keep IDs on the subjects
+
+        Args:
+            - (str) style_image_path: path to the style image
+            - (tf.keras.optimizers) Optimizer to use
+            - (int) number of epoch
+            - (str) image path: path the content image
+            - (str) out_path: path to save the result
+            - (tuple) resize: target resolution for the gif
+            - (bool) add_content_img: add the content image on bottom left of result
+            - (bool) add_style_img: add style image on bottom left of result
+        """
+        content_image_init = Image.open("imgs/content.jpg")
+        orig_height, orig_width = content_image_init.size[0], content_image_init.size[1]
+        if resize is None:
+            resize = (orig_height, orig_width)
+        content_image = np.array(content_image_init)
+        content_image = cv2.resize(content_image, (300, 300),
+                                   interpolation=cv2.INTER_NEAREST)
+        content_image = tf.expand_dims(tf.convert_to_tensor(content_image, dtype=tf.float32), 0)
+
+        style_image = Image.open(style_image_path)
+        style_image = np.array(style_image)
+        style_image = cv2.resize(style_image, (300, 300),
+                                   interpolation=cv2.INTER_NEAREST)
+        style_image = tf.expand_dims(tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
+
+        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(tf.squeeze(style_image))
+
+        image_result = self.training(
+            style_image, content_image, optimizer, epochs)[-1]
+
+        image_result = image_result.resize(resize, Image.ANTIALIAS)
+
+        if add_content_img and not add_style_img:
+            min_img_size = (resize[0]//3, resize[1]//3)
+            pil_content = content_image_init.resize(min_img_size, Image.ANTIALIAS)
+            draw = ImageDraw.Draw(pil_content)
+            min_point = (-10, 0)
+            end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+
+        if not add_content_img and add_style_img:
+            style_resize_ratio = int(round(orig_height/resize[0]*0.8))
+            pil_style = style_image_on_gif.resize(
+                (int(style_image_on_gif.size[0]//style_resize_ratio),
+                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+            draw = ImageDraw.Draw(pil_style)
+            min_point = (-10, 0)
+            end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
+
+        if add_content_img and add_style_img:
+            min_img_size = (resize[0]//3, resize[1]//3)
+            pil_content = content_image_init.resize(min_img_size, Image.ANTIALIAS)
+            draw = ImageDraw.Draw(pil_content)
+            min_point = (-10, 0)
+            end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+
+            style_resize_ratio = int(round(orig_height/resize[0]*0.8))
+            pil_style = style_image_on_gif.resize(
+                (int(style_image_on_gif.size[0]//style_resize_ratio),
+                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+            draw = ImageDraw.Draw(pil_style)
+            min_point = (-10, 0)
+            end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
+
+        image_result.save(out_path)
