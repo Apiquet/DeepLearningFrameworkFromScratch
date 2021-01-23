@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 
-def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
+def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22, line_width=2):
     """
     Function to concat 4 gif files into 1
     path_1 to bottom left
@@ -60,7 +60,8 @@ def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
         draw = ImageDraw.Draw(pil_img_1)
         min_point = (-10, 0)
         end_point = (pil_img_1.size[0], pil_img_1.size[1]+10)
-        draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+        draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                       width=line_width)
         white_pil.paste(pil_img_1, (0,  pil_img_1.size[1]))
 
         np_img_2 = np.asarray(gif_2_imgs[idx])
@@ -68,7 +69,8 @@ def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
         draw = ImageDraw.Draw(pil_img_2)
         min_point = (0, 0)
         end_point = (pil_img_2.size[0]+10, pil_img_2.size[1]+10)
-        draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+        draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                       width=line_width)
         white_pil.paste(pil_img_2, (pil_img_2.size[0], pil_img_2.size[1]))
 
         np_img_3 = np.asarray(gif_3_imgs[idx])
@@ -76,7 +78,8 @@ def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
         draw = ImageDraw.Draw(pil_img_3)
         min_point = (0, -10)
         end_point = (pil_img_3.size[0]+10, pil_img_3.size[1])
-        draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+        draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                       width=line_width)
         white_pil.paste(pil_img_3, (pil_img_3.size[0], 0))
 
         np_img_4 = np.asarray(gif_4_imgs[idx])
@@ -84,7 +87,8 @@ def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
         draw = ImageDraw.Draw(pil_img_4)
         min_point = (-10, -10)
         end_point = (pil_img_4.size[0], pil_img_4.size[1])
-        draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+        draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                       width=line_width)
         white_pil.paste(pil_img_4, (0, 0))
 
         images.append(white_pil.copy())
@@ -123,25 +127,29 @@ def concat4Images(path_1, path_2, path_3, path_4, out_path, line_width=2):
     draw = ImageDraw.Draw(pil_img_1)
     min_point = (-10, 0)
     end_point = (pil_img_1.size[0], pil_img_1.size[1]+10)
-    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                   width=line_width)
     white_pil.paste(pil_img_1, (0,  pil_img_1.size[1]))
 
     draw = ImageDraw.Draw(pil_img_2)
     min_point = (0, 0)
     end_point = (pil_img_2.size[0]+10, pil_img_2.size[1]+10)
-    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                   width=line_width)
     white_pil.paste(pil_img_2, (pil_img_2.size[0], pil_img_2.size[1]))
 
     draw = ImageDraw.Draw(pil_img_3)
     min_point = (0, -10)
     end_point = (pil_img_3.size[0]+10, pil_img_3.size[1])
-    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                   width=line_width)
     white_pil.paste(pil_img_3, (pil_img_3.size[0], 0))
 
     draw = ImageDraw.Draw(pil_img_4)
     min_point = (-10, -10)
     end_point = (pil_img_4.size[0], pil_img_4.size[1])
-    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                   width=line_width)
     white_pil.paste(pil_img_4, (0, 0))
 
     white_pil.save(out_path)
