@@ -176,9 +176,6 @@ class VGG16StyleTransfer(tf.keras.Model):
             img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             orig_height, orig_width = img.size[0], img.size[1]
 
-            line_width = int(0.0025 * orig_width)
-            font = ImageFont.truetype("arial.ttf", line_width*9)
-
             content_image = np.array(img)
             content_image = cv2.resize(
                 content_image, (300, 300), interpolation=cv2.INTER_NEAREST)
