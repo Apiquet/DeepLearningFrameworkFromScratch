@@ -133,7 +133,7 @@ class VGG16StyleTransfer(tf.keras.Model):
     def inferOnVideo(self, style_image_path, optimizer, epochs,
                      video_path, out_gif, start_idx=0, end_idx=-1,
                      skip=1, resize=None, fps=30,
-                     add_content_img=False, add_style_img=False):
+                     add_content_img=False, add_style_img=False, line_width=2):
         """
         Method to infer model on a MP4 video
         Create a gif with the results
@@ -203,7 +203,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_content)
                 min_point = (-10, 0)
                 end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
                 image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
             if not add_content_img and add_style_img:
@@ -214,7 +214,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_style)
                 min_point = (-10, 0)
                 end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
                 image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
             if add_content_img and add_style_img:
@@ -223,7 +223,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_content)
                 min_point = (-10, 0)
                 end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
                 image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
                 style_resize_ratio = int(round(orig_height/resize[0]*0.8))
@@ -233,7 +233,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_style)
                 min_point = (-10, 0)
                 end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
                 image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
 
             imgs.append(image_result)
@@ -246,7 +246,7 @@ class VGG16StyleTransfer(tf.keras.Model):
 
     def inferOnImage(self, style_image_path, optimizer, epochs,
                      image_path, out_path, resize=None,
-                     add_content_img=False, add_style_img=False):
+                     add_content_img=False, add_style_img=False, line_width=2):
         """
         Method to infer model on a MP4 video
         Create a gif with the results
@@ -291,7 +291,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             draw = ImageDraw.Draw(pil_content)
             min_point = (-10, 0)
             end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
             image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
         if not add_content_img and add_style_img:
@@ -302,7 +302,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             draw = ImageDraw.Draw(pil_style)
             min_point = (-10, 0)
             end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
             image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
         if add_content_img and add_style_img:
@@ -311,7 +311,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             draw = ImageDraw.Draw(pil_content)
             min_point = (-10, 0)
             end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
             image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
             style_resize_ratio = int(round(orig_height/resize[0]*0.8))
@@ -321,7 +321,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             draw = ImageDraw.Draw(pil_style)
             min_point = (-10, 0)
             end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
             image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
 
         image_result.save(out_path)
