@@ -132,7 +132,8 @@ class VGG16StyleTransfer(tf.keras.Model):
 
     def inferOnVideo(self, style_image, optimizer, epochs,
                      video_path, out_gif, start_idx=0, end_idx=-1,
-                     skip=1, resize=None, fps=30):
+                     skip=1, resize=None, fps=30, txt=None,
+                     add_content_img=False, add_style_img=False):
         """
         Method to infer model on a MP4 video
         Create a gif with the results
@@ -159,6 +160,8 @@ class VGG16StyleTransfer(tf.keras.Model):
         number_of_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if end_idx != -1:
             number_of_frame = end_idx
+
+            
         for _ in tqdm(range(number_of_frame), position=0, leave=True):
             ret, frame = cap.read()
             if not ret:
@@ -187,21 +190,45 @@ class VGG16StyleTransfer(tf.keras.Model):
 
             image_result = image_result.resize(resize, Image.ANTIALIAS)
 
-            style_resize_ratio = int(orig_height/resize[0]*0.8)
-            min_style_image = style_image_on_gif.resize(
-                (int(style_image_on_gif.size[0]//style_resize_ratio),
-                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+            if add_content_img and not add_style_img:
+                min_img_size = (resize[0]//3, resize[1]//3)
+                pil_content = img.resize(min_img_size, Image.ANTIALIAS)
+                draw = ImageDraw.Draw(pil_content)
+                min_point = (-10, 0)
+                end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
-            min_img_size = (resize[0]//3, resize[1]//3)
-            image_result.paste(img.resize(min_img_size, Image.ANTIALIAS), (0, image_result.size[1]-min_img_size[1]))
-            image_result.paste(min_style_image, (0, image_result.size[1]-min_img_size[1]-min_style_image.size[1]))
+            if not add_content_img and add_style_img:
+                style_resize_ratio = int(orig_height/resize[0]*0.8)
+                pil_style = style_image_on_gif.resize(
+                    (int(style_image_on_gif.size[0]//style_resize_ratio),
+                    int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                draw = ImageDraw.Draw(pil_style)
+                min_point = (-10, 0)
+                end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
-            draw = ImageDraw.Draw(image_result)
-            draw.text((0, image_result.size[1]-min_img_size[1]),
-                      "Initial image", font=font, fill=(255, 255, 255))
-            
-            draw.text((0, image_result.size[1]-min_img_size[1]-min_style_image.size[1]),
-                      "Style image", font=font, fill=(255, 255, 255))
+            if add_content_img and add_style_img:
+                min_img_size = (resize[0]//3, resize[1]//3)
+                pil_content = img.resize(min_img_size, Image.ANTIALIAS)
+                draw = ImageDraw.Draw(pil_content)
+                min_point = (-10, 0)
+                end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+
+                style_resize_ratio = int(orig_height/resize[0]*0.8)
+                pil_style = style_image_on_gif.resize(
+                    (int(style_image_on_gif.size[0]//style_resize_ratio),
+                    int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                draw = ImageDraw.Draw(pil_style)
+                min_point = (-10, 0)
+                end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=2)
+                image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
+
             imgs.append(image_result)
 
         imgs[0].save(out_gif, format='GIF', append_images=imgs[1:], save_all=True, loop=0)
