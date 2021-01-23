@@ -87,13 +87,15 @@ class VGG16StyleTransfer(tf.keras.Model):
 
     def get_features(self, data):
         outputs = self.model(data/255)
+
         def gram_calc(data):
             return tf.linalg.einsum('bijc,bijd->bcd', data, data) /\
-                tf.cast(data.shape[1] * data.shape[2], tf.float32)     
+                tf.cast(data.shape[1] * data.shape[2], tf.float32)
         style_features = [gram_calc(layer) for layer in outputs[:-1]]
         return style_features, outputs[-1]
 
-    def get_loss(self, style_target, style_feature, content_target, content_feature):
+    def get_loss(self, style_target, style_feature,
+                 content_target, content_feature):
         style_loss = tf.add_n([
             tf.reduce_mean(tf.square(features - targets))
             for features, targets in zip(style_feature, style_target)])
@@ -110,21 +112,26 @@ class VGG16StyleTransfer(tf.keras.Model):
         _, content_targets = self.get_features(content_image)
 
         generated_image = tf.cast(content_image, dtype=tf.float32)
-        generated_image = tf.Variable(generated_image) 
+        generated_image = tf.Variable(generated_image)
 
-        images.append(tf.keras.preprocessing.image.array_to_img(tf.squeeze(content_image)))
+        images.append(tf.keras.preprocessing.image.array_to_img(
+            tf.squeeze(content_image)))
         for n in tqdm(range(epochs), position=0, leave=True):
             with tf.GradientTape() as tape:
-                style_features, content_features = self.get_features(generated_image)
-                loss = self.get_loss(style_targets, style_features, content_targets, content_features)
+                style_features, content_features = self.get_features(
+                    generated_image)
+                loss = self.get_loss(style_targets, style_features,
+                                     content_targets, content_features)
 
             gradients = tape.gradient(loss, generated_image)
             optimizer.apply_gradients([(gradients, generated_image)])
             generated_image.assign(
-              tf.clip_by_value(generated_image, clip_value_min=0.0, clip_value_max=255.0))
+              tf.clip_by_value(generated_image, clip_value_min=0.0,
+                               clip_value_max=255.0))
 
             tmp_img = tf.Variable(generated_image)
-            images.append(tf.keras.preprocessing.image.array_to_img(tf.squeeze(tmp_img)))
+            images.append(tf.keras.preprocessing.image.array_to_img(
+                tf.squeeze(tmp_img)))
         return images
 
     def call(self, style_image, content_image, optimizer, epochs=1):
@@ -137,8 +144,6 @@ class VGG16StyleTransfer(tf.keras.Model):
         """
         Method to infer model on a MP4 video
         Create a gif with the results
-        Infer SSD from models/SSD300.py on each image in sequence
-        Tracker from models.NaiveTracker can be used to keep IDs on the subjects
 
         Args:
             - (str) style_image_path: path to the style image
@@ -151,16 +156,18 @@ class VGG16StyleTransfer(tf.keras.Model):
             - (int) skip: idx%skip != 0 is skipped
             - (tuple) resize: target resolution for the gif
             - (int) fps: fps of the output gif
-            - (bool) add_content_img: add the content image on bottom left of result
+            - (bool) add_content_img: add content image on bottom left
             - (bool) add_style_img: add style image on bottom left of result
         """
         style_image = Image.open(style_image_path)
         style_image = np.array(style_image)
         style_image = cv2.resize(style_image, (300, 300),
-                                   interpolation=cv2.INTER_NEAREST)
-        style_image = tf.expand_dims(tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
+                                 interpolation=cv2.INTER_NEAREST)
+        style_image = tf.expand_dims(
+            tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
 
-        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(tf.squeeze(style_image))
+        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(
+            tf.squeeze(style_image))
 
         cap = cv2.VideoCapture(video_path)
         imgs = []
@@ -169,7 +176,6 @@ class VGG16StyleTransfer(tf.keras.Model):
         if end_idx != -1:
             number_of_frame = end_idx
 
-            
         for _ in tqdm(range(number_of_frame), position=0, leave=True):
             ret, frame = cap.read()
             if not ret:
@@ -203,19 +209,24 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_content)
                 min_point = (-10, 0)
                 end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-                image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                               width=line_width)
+                image_result.paste(
+                    pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
             if not add_content_img and add_style_img:
                 style_resize_ratio = int(round(orig_height/resize[0]*0.8))
                 pil_style = style_image_on_gif.resize(
                     (int(style_image_on_gif.size[0]//style_resize_ratio),
-                    int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                     int(style_image_on_gif.size[1]//style_resize_ratio)),
+                    Image.ANTIALIAS)
                 draw = ImageDraw.Draw(pil_style)
                 min_point = (-10, 0)
                 end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-                image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                               width=line_width)
+                image_result.paste(
+                    pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
             if add_content_img and add_style_img:
                 min_img_size = (resize[0]//3, resize[1]//3)
@@ -223,26 +234,31 @@ class VGG16StyleTransfer(tf.keras.Model):
                 draw = ImageDraw.Draw(pil_content)
                 min_point = (-10, 0)
                 end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-                image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                               width=line_width)
+                image_result.paste(
+                    pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
                 style_resize_ratio = int(round(orig_height/resize[0]*0.8))
                 pil_style = style_image_on_gif.resize(
                     (int(style_image_on_gif.size[0]//style_resize_ratio),
-                    int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                     int(style_image_on_gif.size[1]//style_resize_ratio)),
+                    Image.ANTIALIAS)
                 draw = ImageDraw.Draw(pil_style)
                 min_point = (-10, 0)
                 end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-                draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-                image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
+                draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                               width=line_width)
+                ypos_offset = pil_content.size[1]-pil_style.size[1]
+                image_result.paste(
+                    pil_style, (0, image_result.size[1]-ypos_offset))
 
             imgs.append(image_result)
 
-        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:], save_all=True, loop=0)
+        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:],
+                     save_all=True, loop=0)
         gif = imageio.mimread(out_gif)
         imageio.mimsave(out_gif, gif, fps=fps)
-
-        
 
     def inferOnImage(self, style_image_path, optimizer, epochs,
                      image_path, out_path, resize=None,
@@ -250,8 +266,6 @@ class VGG16StyleTransfer(tf.keras.Model):
         """
         Method to infer model on a MP4 video
         Create a gif with the results
-        Infer SSD from models/SSD300.py on each image in sequence
-        Tracker from models.NaiveTracker can be used to keep IDs on the subjects
 
         Args:
             - (str) style_image_path: path to the style image
@@ -260,25 +274,29 @@ class VGG16StyleTransfer(tf.keras.Model):
             - (str) image path: path the content image
             - (str) out_path: path to save the result
             - (tuple) resize: target resolution for the gif
-            - (bool) add_content_img: add the content image on bottom left of result
+            - (bool) add_content_img: add the content image on bottom left
             - (bool) add_style_img: add style image on bottom left of result
         """
         content_image_init = Image.open("imgs/content.jpg")
-        orig_height, orig_width = content_image_init.size[0], content_image_init.size[1]
+        orig_height, orig_width = \
+            content_image_init.size[0], content_image_init.size[1]
         if resize is None:
             resize = (orig_height, orig_width)
         content_image = np.array(content_image_init)
         content_image = cv2.resize(content_image, (300, 300),
                                    interpolation=cv2.INTER_NEAREST)
-        content_image = tf.expand_dims(tf.convert_to_tensor(content_image, dtype=tf.float32), 0)
+        content_image = tf.expand_dims(
+            tf.convert_to_tensor(content_image, dtype=tf.float32), 0)
 
         style_image = Image.open(style_image_path)
         style_image = np.array(style_image)
         style_image = cv2.resize(style_image, (300, 300),
-                                   interpolation=cv2.INTER_NEAREST)
-        style_image = tf.expand_dims(tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
+                                 interpolation=cv2.INTER_NEAREST)
+        style_image = tf.expand_dims(
+            tf.convert_to_tensor(style_image, dtype=tf.float32), 0)
 
-        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(tf.squeeze(style_image))
+        style_image_on_gif = tf.keras.preprocessing.image.array_to_img(
+            tf.squeeze(style_image))
 
         image_result = self.training(
             style_image, content_image, optimizer, epochs)[-1]
@@ -287,41 +305,54 @@ class VGG16StyleTransfer(tf.keras.Model):
 
         if add_content_img and not add_style_img:
             min_img_size = (resize[0]//3, resize[1]//3)
-            pil_content = content_image_init.resize(min_img_size, Image.ANTIALIAS)
+            pil_content = content_image_init.resize(min_img_size,
+                                                    Image.ANTIALIAS)
             draw = ImageDraw.Draw(pil_content)
             min_point = (-10, 0)
             end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-            image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                           width=line_width)
+            image_result.paste(
+                pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
         if not add_content_img and add_style_img:
             style_resize_ratio = int(round(orig_height/resize[0]*0.8))
             pil_style = style_image_on_gif.resize(
                 (int(style_image_on_gif.size[0]//style_resize_ratio),
-                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                 int(style_image_on_gif.size[1]//style_resize_ratio)),
+                Image.ANTIALIAS)
             draw = ImageDraw.Draw(pil_style)
             min_point = (-10, 0)
             end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-            image_result.paste(pil_style, (0, image_result.size[1]-pil_style.size[1]))
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                           width=line_width)
+            image_result.paste(
+                pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
         if add_content_img and add_style_img:
             min_img_size = (resize[0]//3, resize[1]//3)
-            pil_content = content_image_init.resize(min_img_size, Image.ANTIALIAS)
+            pil_content = content_image_init.resize(min_img_size,
+                                                    Image.ANTIALIAS)
             draw = ImageDraw.Draw(pil_content)
             min_point = (-10, 0)
             end_point = (pil_content.size[0]-3, pil_content.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-            image_result.paste(pil_content, (0, image_result.size[1]-pil_content.size[1]))
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                           width=line_width)
+            image_result.paste(
+                pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
             style_resize_ratio = int(round(orig_height/resize[0]*0.8))
             pil_style = style_image_on_gif.resize(
                 (int(style_image_on_gif.size[0]//style_resize_ratio),
-                int(style_image_on_gif.size[1]//style_resize_ratio)), Image.ANTIALIAS)
+                 int(style_image_on_gif.size[1]//style_resize_ratio)),
+                Image.ANTIALIAS)
             draw = ImageDraw.Draw(pil_style)
             min_point = (-10, 0)
             end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
-            draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
-            image_result.paste(pil_style, (0, image_result.size[1]-pil_content.size[1]-pil_style.size[1]))
+            draw.rectangle((min_point, end_point), outline=(255, 255, 255),
+                           width=line_width)
+            ypos_offset = pil_content.size[1]-pil_style.size[1]
+            image_result.paste(
+                pil_style, (0, image_result.size[1]-ypos_offset))
 
         image_result.save(out_path)
