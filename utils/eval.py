@@ -94,3 +94,54 @@ def concat4Gif(path_1, path_2, path_3, path_4, out_path, fps=22):
                    save_all=True, loop=0)
     gif = imageio.mimread(out_path)
     imageio.mimsave(out_path, gif, fps=fps)
+
+
+def concat4Images(path_1, path_2, path_3, path_4, out_path, line_width=2):
+    """
+    Function to concat 4 images into 1
+    path_1 to bottom left
+    path_2 to bottom right
+    path_3 to top right
+    path_4 to top left
+
+    Args:
+        - (str) path_1:  path to 1st image
+        - (str) path_2:  path to 2nd image
+        - (str) path_3:  path to 3rd image
+        - (str) path_4:  path to 4th image
+        - (str) out_path:  path to the output image
+    """
+    pil_img_1 = Image.open(path_1)
+    pil_img_2 = Image.open(path_2)
+    pil_img_3 = Image.open(path_3)
+    pil_img_4 = Image.open(path_4)
+
+    total_size = (pil_img_1.size[0]*2, pil_img_1.size[1]*2, 3)
+    white_image = 255 * np.ones(total_size, np.uint8)
+    white_pil = Image.fromarray(white_image)
+
+    draw = ImageDraw.Draw(pil_img_1)
+    min_point = (-10, 0)
+    end_point = (pil_img_1.size[0], pil_img_1.size[1]+10)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    white_pil.paste(pil_img_1, (0,  pil_img_1.size[1]))
+
+    draw = ImageDraw.Draw(pil_img_2)
+    min_point = (0, 0)
+    end_point = (pil_img_2.size[0]+10, pil_img_2.size[1]+10)
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    white_pil.paste(pil_img_2, (pil_img_2.size[0], pil_img_2.size[1]))
+
+    draw = ImageDraw.Draw(pil_img_3)
+    min_point = (0, -10)
+    end_point = (pil_img_3.size[0]+10, pil_img_3.size[1])
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    white_pil.paste(pil_img_3, (pil_img_3.size[0], 0))
+
+    draw = ImageDraw.Draw(pil_img_4)
+    min_point = (-10, -10)
+    end_point = (pil_img_4.size[0], pil_img_4.size[1])
+    draw.rectangle((min_point, end_point), outline=(255, 255, 255), width=line_width)
+    white_pil.paste(pil_img_4, (0, 0))
+
+    white_pil.save(out_path)
