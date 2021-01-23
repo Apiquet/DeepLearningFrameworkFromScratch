@@ -41,18 +41,24 @@ class VGG16StyleTransfer(tf.keras.Model):
         from models.SSD300 import SSD300
 
         self.n_classes = n_classes
+
+        # get SSD300 model
         SSD300_model = SSD300(21, floatType)
         input_shape = (300, 300, 3)
+        # run model on zero tensor to initialize it
         confs, locs = SSD300_model(tf.zeros([32, 300, 300, 3], self.floatType))
         if ssd_weights_path is not None:
             SSD300_model.load_weights(ssd_weights_path)
+        # get the VGG-16 part from SSD300
         SSD_backbone = SSD300_model.getVGG16()
 
+        # get a new VGG-16 model until the stage 5
         from models.VGG16 import VGG16
         self.input_res = input_shape
         self.VGG16 = VGG16(input_shape=input_shape)
         self.VGG16_tilStage5 = self.VGG16.getUntilStage5()
 
+        # load weights from SSD to new VGG-16 model
         ssd_seq_idx = 0
         ssd_layer_idx = 0
         for i in range(len(self.VGG16_tilStage5.layers)):
@@ -63,7 +69,8 @@ class VGG16StyleTransfer(tf.keras.Model):
             self.VGG16_tilStage5.get_layer(index=i).set_weights(
                 SSD_backbone.get_layer(index=ssd_seq_idx).get_layer(
                     index=ssd_layer_idx).get_weights())
-            self.VGG16_tilStage5.get_layer(index=i).trainable = True
+            self.VGG16_tilStage5.get_layer(index=i).trainable = False
+        # del models that we won't use anymore
         del SSD_backbone
         del SSD300_model
 
@@ -73,12 +80,14 @@ class VGG16StyleTransfer(tf.keras.Model):
         self.x = self.VGG16_tilStage5.get_layer(index=0)(self.inputs)
 
         for i in range(1, 7):
+            # get first 6 layers for the style loss
             self.style_layers.append(self.x)
             self.x = self.VGG16_tilStage5.get_layer(index=i)(self.x)
 
         for i in range(7, len(self.VGG16_tilStage5.layers)-2):
             self.x = self.VGG16_tilStage5.get_layer(index=i)(self.x)
 
+        # get first layer at index -2 for the content loss
         self.content_layers = [self.x]
 
         self.model = tf.keras.Model(
@@ -86,7 +95,7 @@ class VGG16StyleTransfer(tf.keras.Model):
         self.model.trainable = False
 
     def get_features(self, data):
-        outputs = self.model(data/255)
+        outputs = self.model(data/255.0)
 
         def gram_calc(data):
             return tf.linalg.einsum('bijc,bijd->bcd', data, data) /\
@@ -100,31 +109,47 @@ class VGG16StyleTransfer(tf.keras.Model):
             tf.reduce_mean(tf.square(features - targets))
             for features, targets in zip(style_feature, style_target)])
         content_loss = tf.add_n([
-            0.5 * tf.reduce_sum(tf.square(features - targets))
-            for features, targets in zip(style_feature, style_target)])
+            0.5 * tf.reduce_sum(tf.square(content_feature - content_target))])
 
-        return 0.2 * style_loss + 0.001 * content_loss
+        return 1 * style_loss + 1e-30 * content_loss
 
     def training(self, style_image, content_image, optimizer, epochs=1):
         images = []
 
+        # infer the model on the style image to get the style targets
+        # (result of the first 6 layers)
         style_targets, _ = self.get_features(style_image)
+
+        # infer the model on the content image to get the content targets
+        # (result of the layer of index -2)
         _, content_targets = self.get_features(content_image)
 
+        # generate a copy of our content image
+        # this copy will be update with the gradients over the epochs
         generated_image = tf.cast(content_image, dtype=tf.float32)
         generated_image = tf.Variable(generated_image)
 
         images.append(tf.keras.preprocessing.image.array_to_img(
             tf.squeeze(content_image)))
+
+        # training loop
         for n in tqdm(range(epochs), position=0, leave=True):
             with tf.GradientTape() as tape:
+                # run the model on the current image
+                # (image updated at each run)
+                # get the style feature (outputs of the first 5 layers)
+                # and content feature (outputs of the layer with index -2)
                 style_features, content_features = self.get_features(
                     generated_image)
+                # calculate the loss
                 loss = self.get_loss(style_targets, style_features,
                                      content_targets, content_features)
 
+            # get gradients
             gradients = tape.gradient(loss, generated_image)
+            # apply gradients wrt the image to update
             optimizer.apply_gradients([(gradients, generated_image)])
+            # clip image to have a range of [0, 255]
             generated_image.assign(
               tf.clip_by_value(generated_image, clip_value_min=0.0,
                                clip_value_max=255.0))
@@ -138,7 +163,7 @@ class VGG16StyleTransfer(tf.keras.Model):
         return self.training(style_image, content_image, optimizer, epochs)
 
     def inferOnVideo(self, style_image_path, optimizer, epochs,
-                     video_path, out_gif, start_idx=0, end_idx=-1,
+                     video_path, out_path, start_idx=0, end_idx=-1,
                      skip=1, resize=None, fps=30,
                      add_content_img=False, add_style_img=False, line_width=2):
         """
@@ -249,16 +274,16 @@ class VGG16StyleTransfer(tf.keras.Model):
                 end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
                 draw.rectangle((min_point, end_point), outline=(255, 255, 255),
                                width=line_width)
-                ypos_offset = pil_content.size[1]-pil_style.size[1]
+                ypos_offset = pil_content.size[1]+pil_style.size[1]
                 image_result.paste(
                     pil_style, (0, image_result.size[1]-ypos_offset))
 
             imgs.append(image_result)
 
-        imgs[0].save(out_gif, format='GIF', append_images=imgs[1:],
+        imgs[0].save(out_path, format='GIF', append_images=imgs[1:],
                      save_all=True, loop=0)
-        gif = imageio.mimread(out_gif)
-        imageio.mimsave(out_gif, gif, fps=fps)
+        gif = imageio.mimread(out_path)
+        imageio.mimsave(out_path, gif, fps=fps)
 
     def inferOnImage(self, style_image_path, optimizer, epochs,
                      image_path, out_path, resize=None,
@@ -351,7 +376,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             end_point = (pil_style.size[0]-3, pil_style.size[1]+10)
             draw.rectangle((min_point, end_point), outline=(255, 255, 255),
                            width=line_width)
-            ypos_offset = pil_content.size[1]-pil_style.size[1]
+            ypos_offset = pil_content.size[1]+pil_style.size[1]
             image_result.paste(
                 pil_style, (0, image_result.size[1]-ypos_offset))
 
