@@ -95,6 +95,12 @@ class VGG16StyleTransfer(tf.keras.Model):
         self.model.trainable = False
 
     def get_features(self, data):
+        """
+        Method to get model outputs for style and content layers used by loss
+
+        Args:
+            - (tf.Tensor) input model data with shape (1, 300, 300, 3)
+        """
         outputs = self.model(data/255.0)
 
         def gram_calc(data):
@@ -105,6 +111,17 @@ class VGG16StyleTransfer(tf.keras.Model):
 
     def get_loss(self, style_target, style_feature,
                  content_target, content_feature):
+        """
+        Method to get loss value from style and content targets and features
+
+        Args:
+            - (list of tf.Tensor) style_target with shape (N, 1, W, H)
+            with N the number of style layers
+            - (list of tf.Tensor) style_feature with shape (N, 1, W, H)
+            with N the number of style layers
+            - (tf.Tensor) content_target with shape (1, W, H, C)
+            - (tf.Tensor) content_feature with shape (1, W, H, C)
+        """
         style_loss = tf.add_n([
             tf.reduce_mean(tf.square(features - targets))
             for features, targets in zip(style_feature, style_target)])
@@ -114,6 +131,15 @@ class VGG16StyleTransfer(tf.keras.Model):
         return 1 * style_loss + 1e-30 * content_loss
 
     def training(self, style_image, content_image, optimizer, epochs=1):
+        """
+        Method to apply style transfer on content image
+
+        Args:
+            - (tf.Tensor) style_image with shape (1, W, H, 3)
+            - (tf.Tensor) content_image with shape (1, W, H, 3)
+            - (tf.keras.optimizers) Optimizer to use
+            - (int) number of epoch
+        """
         images = []
 
         # infer the model on the style image to get the style targets
@@ -228,6 +254,7 @@ class VGG16StyleTransfer(tf.keras.Model):
 
             image_result = image_result.resize(resize, Image.ANTIALIAS)
 
+            # add content image on final gif
             if add_content_img and not add_style_img:
                 min_img_size = (resize[0]//3, resize[1]//3)
                 pil_content = img.resize(min_img_size, Image.ANTIALIAS)
@@ -239,6 +266,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 image_result.paste(
                     pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
+            # add style image on final gif
             if not add_content_img and add_style_img:
                 style_resize_ratio = int(round(orig_height/resize[0]*0.8))
                 pil_style = style_image_on_gif.resize(
@@ -253,6 +281,7 @@ class VGG16StyleTransfer(tf.keras.Model):
                 image_result.paste(
                     pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
+            # add content and style images on final gif
             if add_content_img and add_style_img:
                 min_img_size = (resize[0]//3, resize[1]//3)
                 pil_content = img.resize(min_img_size, Image.ANTIALIAS)
@@ -328,6 +357,7 @@ class VGG16StyleTransfer(tf.keras.Model):
 
         image_result = image_result.resize(resize, Image.ANTIALIAS)
 
+        # add content image on final gif
         if add_content_img and not add_style_img:
             min_img_size = (resize[0]//3, resize[1]//3)
             pil_content = content_image_init.resize(min_img_size,
@@ -340,6 +370,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             image_result.paste(
                 pil_content, (0, image_result.size[1]-pil_content.size[1]))
 
+        # add style image on final gif
         if not add_content_img and add_style_img:
             style_resize_ratio = int(round(orig_height/resize[0]*0.8))
             pil_style = style_image_on_gif.resize(
@@ -354,6 +385,7 @@ class VGG16StyleTransfer(tf.keras.Model):
             image_result.paste(
                 pil_style, (0, image_result.size[1]-pil_style.size[1]))
 
+        # add content and style images on final gif
         if add_content_img and add_style_img:
             min_img_size = (resize[0]//3, resize[1]//3)
             pil_content = content_image_init.resize(min_img_size,
