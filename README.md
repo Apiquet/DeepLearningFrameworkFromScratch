@@ -12,6 +12,8 @@ This code shows how reuse the feature extractor of a model trained for object de
 
 The notebook style_transfer_example.ipynb shows how to run the model on images and videos:
 
+The script under utils/ allows to create animations:
+
 ![Image](imgs/concatenate_2.jpg)
 
 ![Video](imgs/concatenate.gif)
