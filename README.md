@@ -16,7 +16,7 @@
 * Convolution layer
 * Flatten layer
 * Max pooling layer
-* Mean pooling layers
+* Average pooling layers
 * Batch Normalization
 * Activation functions: Sigmoid, ReLU, LeakyReLU, Softmax
 * Loss functions (MSE: Mean Squared Error, Cross Entropy)
