@@ -54,8 +54,4 @@ cnn_model = NN.Sequential([
 
 ## Example of use
 
-The following example contains an implementation and training of a CNN. It also shows how to save and load the weights to deploy the model somewhere.
-
-Finally, there is a comparison with a FCN model.
-
-https://github.com/Apiquet/DeepLearningFrameworkFromScratch/blob/master/cnn_example.ipynb
+The cnn-fcn_example.ipynb notebooks contain an implementation and training of a CNN and FCN. They also show how to save and load a model with its weights to deploy it somewhere.
