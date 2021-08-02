@@ -54,4 +54,4 @@ cnn_model = NN.Sequential([
 
 ## Example of use
 
-The cnn-fcn_example.ipynb notebooks contain an implementation and training of a CNN and FCN. They also show how to save and load a model with its weights to deploy it somewhere.
+The cnn-fcn_example.ipynb notebooks contain an implementation and training of a CNN model and a FCN model. They also show how to save and load a model with its weights to deploy it somewhere.
