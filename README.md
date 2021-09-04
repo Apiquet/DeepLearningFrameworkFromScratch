@@ -2,7 +2,7 @@
 
 ## Description
  
-The project is explained [here](https://apiquet.com/2021/01/22/style-transfer-with-vgg-16/)
+The project is explained at the following [link](https://apiquet.com/2021/01/22/style-transfer-with-vgg-16/)
 
 This article shows how reuse the feature extractor of a model trained for object detection in a new model designed for style transfer.
 
