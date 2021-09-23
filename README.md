@@ -6,7 +6,7 @@ The project is explained at the following [link](https://apiquet.com/2021/01/22/
 
 This article shows how reuse the feature extractor of a model trained for object detection (or other tasks) in a new model designed for style transfer.
 
-VGG-16, the feature extractor of [SSD300 model](https://arxiv.org/abs/1512.02325) (from [a previous repository](https://github.com/Apiquet/Tracking_SSD_ReID)), is used to achieve style transfer with a combination of a style loss and a content loss functions:
+VGG-16, the feature extractor of [SSD300 model](https://arxiv.org/abs/1512.02325) (from [a previous repository](https://github.com/Apiquet/Tracking_SSD_ReID)), is used to achieve style transfer with a combination of style and content losses:
 
 ![Image](imgs/style_transfer_steps.png)
 
