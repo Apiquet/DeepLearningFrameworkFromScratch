@@ -12,7 +12,7 @@ VGG-16, the feature extractor of [SSD300 model](https://arxiv.org/abs/1512.02325
 
 ## Usage
 
-The notebook style_transfer_example.ipynb can be used to run the model on images and videos.
+The notebook style_transfer_example.ipynb can be used to run the model plus a style image on image/video content.
 
 The script under utils/ allows to create concatenation of multiple inferences (image or video):
 
