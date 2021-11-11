@@ -23,7 +23,7 @@
 
 ## Example to build a neural network model:
 
-* To build a model, the Sequential module has to be used. Here is the declaration of a simple CNN model with: Convolution -> LeakyReLU -> Max Pooling -> Convolution -> LeakyReLU -> Flatten -> Batch Normalization -> Linear layer -> Linear layer -> Softmax -> Cross Entropy Loss
+* To build a model, the Sequential module has to be used. The code below creates the following network: Convolution -> LeakyReLU -> Max Pooling -> Convolution -> LeakyReLU -> Flatten -> Batch Normalization -> Linear layer -> Linear layer -> Softmax -> Cross Entropy Loss
 
 ```
 cnn_model = NN.Sequential([
