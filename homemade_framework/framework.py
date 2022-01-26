@@ -8,21 +8,30 @@ saving and loading a model to deploy it, getting its number of parameters,
 drawing learning curves, printing its description.
 """
 
-__types__ = ["Linear", "Activation", "Loss",
-             "Softmax", "Flatten", "Convolution",
-             "BatchNormalization", "MaxPooling2D",
-             "AveragePooling2D"]
+__types__ = [
+    "Linear",
+    "Activation",
+    "Loss",
+    "Softmax",
+    "Flatten",
+    "Convolution",
+    "BatchNormalization",
+    "MaxPooling2D",
+    "AveragePooling2D",
+]
 
 
-from datetime import datetime
 import math
+import os
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 
-def print_current_results(epochs, model, train_features, train_target,
-                          test_features, test_target, loss_sum, prefix=""):
+def print_current_results(
+    epochs, model, train_features, train_target, test_features, test_target, loss_sum, prefix=""
+):
     """Compute and save train/test error, print with epoch number and loss.
 
     Keyword arguments:
@@ -40,9 +49,13 @@ def print_current_results(epochs, model, train_features, train_target,
     test_error = compute_accuracy(model, test_features, test_target)
     model.train_error.append(train_error)
     model.test_error.append(test_error)
-    print(prefix + "Epoch: {}, Train Error: {:.4f}%,\
-        Test Error: {:.4f}%, Loss  {:.4f}".format(epochs, train_error,
-                                                  test_error, loss_sum))
+    print(
+        prefix
+        + "Epoch: {}, Train Error: {:.4f}%,\
+        Test Error: {:.4f}%, Loss  {:.4f}".format(
+            epochs, train_error, test_error, loss_sum
+        )
+    )
 
 
 def print_in_color(message, color="red"):
@@ -53,11 +66,17 @@ def print_in_color(message, color="red"):
     color -- color wanted in choices dictionary
     """
 
-    choices = {"green": "32", "blue": "34",
-               "magenta": "35", "red": "31",
-               "Gray": "37", "Cyan": "36",
-               "Black": "39", "Yellow": "33",
-               "highlight": "40"}
+    choices = {
+        "green": "32",
+        "blue": "34",
+        "magenta": "35",
+        "red": "31",
+        "Gray": "37",
+        "Cyan": "36",
+        "Black": "39",
+        "Yellow": "33",
+        "highlight": "40",
+    }
     if message == "-h":
         return list(choices.keys())
     elif color == "":
@@ -65,13 +84,24 @@ def print_in_color(message, color="red"):
     elif color in choices:
         print("\033[" + choices[color] + "m" + message + "\033[0m")
     else:
-        raise ValueError("Available colors: {}, '-h' to get\
-            the list".format(choices.keys()))
+        raise ValueError(
+            "Available colors: {}, '-h' to get\
+            the list".format(
+                choices.keys()
+            )
+        )
 
 
-def train(model, num_epochs, train_features,
-          train_target, test_features,
-          test_target, batch_size, print_every_n_epochs=1):
+def train(
+    model,
+    num_epochs,
+    train_features,
+    train_target,
+    test_features,
+    test_target,
+    batch_size,
+    print_every_n_epochs=1,
+):
     """Train a model in mini-batch and print its results.
 
     Keyword arguments:
@@ -88,30 +118,51 @@ def train(model, num_epochs, train_features,
     # Convert train_target to one hot encoding
     train_target_one_hot = convert_to_one_hot_labels(train_target)
 
-    print_current_results(0, model, train_features, train_target,
-                          test_features, test_target, 0,
-                          prefix="Before training: ")
+    print_current_results(
+        0,
+        model,
+        train_features,
+        train_target,
+        test_features,
+        test_target,
+        0,
+        prefix="Before training: ",
+    )
     test_results = []
     for epochs in range(0, num_epochs):
         loss_sum = 0
         test_results.append(get_inferences(model, test_features))
         for b in range(train_features.shape[0] // batch_size):
-            output = model.forward(train_features[
-                list(range(b*batch_size, (b+1)*batch_size))])
-            loss = model.backward(train_target_one_hot[
-                list(range(b*batch_size, (b+1)*batch_size))],
-                                  output)
+            output = model.forward(
+                train_features[list(range(b * batch_size, (b + 1) * batch_size))]
+            )
+            loss = model.backward(
+                train_target_one_hot[list(range(b * batch_size, (b + 1) * batch_size))], output
+            )
             loss_sum = loss_sum + loss.item()
         if epochs % print_every_n_epochs == 0:
-            print_current_results(epochs + 1, model, train_features,
-                                  train_target, test_features,
-                                  test_target, loss_sum)
+            print_current_results(
+                epochs + 1,
+                model,
+                train_features,
+                train_target,
+                test_features,
+                test_target,
+                loss_sum,
+            )
 
     training_time = datetime.now() - start_time
     print('\nTraining time: {}'.format(training_time))
-    print_current_results(epochs, model, train_features, train_target,
-                          test_features, test_target, loss_sum,
-                          prefix="After training: ")
+    print_current_results(
+        epochs,
+        model,
+        train_features,
+        train_target,
+        test_features,
+        test_target,
+        loss_sum,
+        prefix="After training: ",
+    )
 
 
 def learning_curves(model):
@@ -149,7 +200,7 @@ def generate_disc_set(nb):
     """
 
     features = np.random.uniform(-1, 1, (nb, 2))
-    target = (features[:, 0]**2 + features[:, 1]**2)/math.pi < 0.2
+    target = (features[:, 0] ** 2 + features[:, 1] ** 2) / math.pi < 0.2
     return features, target.astype(int)
 
 
@@ -165,10 +216,8 @@ def plot_dataset(features, target):
 
     fig, ax = plt.subplots(figsize=(4, 4))
     plt.title("Dataset")
-    scatter = ax.scatter(features[:, 0], features[:, 1],
-                         c=target)
-    legend = ax.legend(*scatter.legend_elements(), title="Labels",
-                       loc="lower right")
+    scatter = ax.scatter(features[:, 0], features[:, 1], c=target)
+    legend = ax.legend(*scatter.legend_elements(), title="Labels", loc="lower right")
     ax.add_artist(legend)
     return plt
 
@@ -202,7 +251,7 @@ def compute_accuracy(model, data_features, data_targets):
 
     predicted_classes = get_inferences(model, data_features)
     nb_data_errors = sum(data_targets != predicted_classes)
-    return nb_data_errors/data_features.shape[0]*100
+    return nb_data_errors / data_features.shape[0] * 100
 
 
 def get_inferences(model, data_features):
@@ -328,15 +377,13 @@ class LeakyReLU(Module):
         self.prev_x = x
         neg = x < 0
         pos = x >= 0
-        y = np.multiply(neg.astype(float), x)*self.a +\
-            np.multiply(pos.astype(float), x)
+        y = np.multiply(neg.astype(float), x) * self.a + np.multiply(pos.astype(float), x)
         return y
 
     def backward(self, dout):
         neg = self.prev_x < 0
         pos = self.prev_x >= 0
-        y = np.multiply(neg.astype(float), dout)*self.a +\
-            np.multiply(pos.astype(float), dout)
+        y = np.multiply(neg.astype(float), dout) * self.a + np.multiply(pos.astype(float), dout)
         return y
 
     def print(self, color=""):
@@ -394,11 +441,11 @@ class LossMSE(Module):
         self.name = "LossMSE"
 
     def loss(self, y, y_pred):
-        loss = sum(((y_pred - y)**2).sum(axis=0))/y.shape[1]
+        loss = sum(((y_pred - y) ** 2).sum(axis=0)) / y.shape[1]
         return loss
 
     def derivative(self, y, y_pred):
-        return 2*(y_pred-y)/y.shape[1]
+        return 2 * (y_pred - y) / y.shape[1]
 
     def print(self, color=""):
         print_in_color("\tMSE", color)
@@ -420,11 +467,11 @@ class LossCrossEntropy(Module):
         self.name = "LossCrossEntropy"
 
     def loss(self, y, y_pred):
-        loss = -sum((y*np.log(y_pred)).sum(axis=0))/y.shape[1]
+        loss = -sum((y * np.log(y_pred)).sum(axis=0)) / y.shape[1]
         return loss
 
     def derivative(self, y, y_pred):
-        return -(y/(y_pred+0.0001))/y.shape[1]
+        return -(y / (y_pred + 0.0001)) / y.shape[1]
 
     def print(self, color=""):
         print_in_color("\tCross Entropy", color)
@@ -447,7 +494,7 @@ class Softmax(Module):
         self.prev_x = 0
 
     def eq(self, x):
-        return np.exp(x)/np.sum(np.exp(x), axis=1)[:, None]
+        return np.exp(x) / np.sum(np.exp(x), axis=1)[:, None]
 
     def forward(self, x):
         self.prev_x = x
@@ -485,14 +532,14 @@ class BatchNorm(Module):
         super().__init__()
         self.type = "BatchNormalization"
         self.gamma = 1
-        self.eps = 10**-100
+        self.eps = 10 ** -100
         self.beta = 0
 
     def forward(self, x):
         N, D = x.shape
 
         # step1: calculate mean
-        mu = 1./N * np.sum(x, axis=0)
+        mu = 1.0 / N * np.sum(x, axis=0)
 
         # step2: subtract mean vector of every trainings example
         self.xmu = x - mu
@@ -501,13 +548,13 @@ class BatchNorm(Module):
         sq = self.xmu ** 2
 
         # step4: calculate variance
-        self.var = 1./N * np.sum(sq, axis=0)
+        self.var = 1.0 / N * np.sum(sq, axis=0)
 
         # step5: add eps for numerical stability, then sqrt
         self.sqrtvar = np.sqrt(self.var + self.eps)
 
         # step6: invert sqrtwar
-        self.ivar = 1./self.sqrtvar
+        self.ivar = 1.0 / self.sqrtvar
 
         # step7: execute normalization
         self.xhat = self.xmu * self.ivar
@@ -527,32 +574,32 @@ class BatchNorm(Module):
         dgammax = dout  # not necessary, but more understandable
 
         # step8
-        dgamma = np.sum(dgammax*self.xhat, axis=0)
+        dgamma = np.sum(dgammax * self.xhat, axis=0)
         self.update(dgamma, dbeta)
         dxhat = dgammax * self.gamma
 
         # step7
-        divar = np.sum(dxhat*self.xmu, axis=0)
+        divar = np.sum(dxhat * self.xmu, axis=0)
         dxmu1 = dxhat * self.ivar
 
         # step6
-        dsqrtvar = -1. / (self.sqrtvar ** 2) * divar
+        dsqrtvar = -1.0 / (self.sqrtvar ** 2) * divar
 
         # step5
-        dvar = 0.5 * 1. / np.sqrt(self.var + self.eps) * dsqrtvar
+        dvar = 0.5 * 1.0 / np.sqrt(self.var + self.eps) * dsqrtvar
 
         # step4
-        dsq = 1. / N * np.ones((N, D)) * dvar
+        dsq = 1.0 / N * np.ones((N, D)) * dvar
 
         # step3
         dxmu2 = 2 * self.xmu * dsq
 
         # step2
-        dx1 = (dxmu1 + dxmu2)
-        dmu = -1 * np.sum(dxmu1+dxmu2, axis=0)
+        dx1 = dxmu1 + dxmu2
+        dmu = -1 * np.sum(dxmu1 + dxmu2, axis=0)
 
         # step1
-        dx2 = 1. / N * np.ones((N, D)) * dmu
+        dx2 = 1.0 / N * np.ones((N, D)) * dmu
 
         # step0
         dx = dx1 + dx2
@@ -583,8 +630,9 @@ class BatchNorm(Module):
             self.beta = np.fromfile(f)
 
     def print(self, color=""):
-        print_in_color("\tBatch normalization function: a={}, b={}".format(
-            self.gamma, self.beta), color)
+        print_in_color(
+            "\tBatch normalization function: a={}, b={}".format(self.gamma, self.beta), color
+        )
         return
 
 
@@ -609,17 +657,14 @@ class Linear(Module):
         self.prev_x = np.zeros(out_features)
         self.in_features = in_features
         self.out_features = out_features
-        stdv = 1. / math.sqrt(self.out_features)
-        self.weight = np.random.uniform(-stdv, stdv, (self.in_features,
-                                                      self.out_features))
+        stdv = 1.0 / math.sqrt(self.out_features)
+        self.weight = np.random.uniform(-stdv, stdv, (self.in_features, self.out_features))
         self.bias = np.random.uniform(-stdv, stdv, (self.out_features, 1))
 
     def update(self, dout):
         lr = self.lr
-        self.weight = self.weight -\
-            np.multiply(lr, np.matmul(np.transpose(self.prev_x), dout))
-        self.bias = self.bias -\
-            lr*dout.mean(0).reshape([self.bias.shape[0], 1])*1
+        self.weight = self.weight - np.multiply(lr, np.matmul(np.transpose(self.prev_x), dout))
+        self.bias = self.bias - lr * dout.mean(0).reshape([self.bias.shape[0], 1]) * 1
 
     def backward(self, dout):
         b = np.matmul(dout, np.transpose(self.weight))
@@ -628,8 +673,7 @@ class Linear(Module):
 
     def forward(self, x):
         self.prev_x = x
-        return np.matmul(x, self.weight) +\
-            np.transpose(np.repeat(self.bias, x.shape[0], axis=1))
+        return np.matmul(x, self.weight) + np.transpose(np.repeat(self.bias, x.shape[0], axis=1))
 
     def set_Lr(self, lr):
         self.lr = lr
@@ -646,14 +690,12 @@ class Linear(Module):
 
     def load(self, path, i):
         with open(path + self.type + i + '-weights.bin', "rb") as f:
-            self.weight = np.fromfile(f).reshape([self.in_features,
-                                                  self.out_features])
+            self.weight = np.fromfile(f).reshape([self.in_features, self.out_features])
         with open(path + self.type + i + '-bias.bin', "rb") as f:
             self.bias = np.fromfile(f).reshape([self.out_features, 1])
 
     def print(self, color=""):
-        msg = "\tLinear layer shape: {}".format([self.weight.shape[0],
-                                                 self.weight.shape[1]])
+        msg = "\tLinear layer shape: {}".format([self.weight.shape[0], self.weight.shape[1]])
         print_in_color(msg, color)
 
     def print_weight(self):
@@ -676,8 +718,7 @@ class Convolution(Module):
     print -- print class description
     """
 
-    def __init__(self, in_channels, out_channels,
-                 kernel_size, stride=0, padding=0):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=0, padding=0):
         super().__init__()
         self.type = "Convolution"
         self.k_height = kernel_size
@@ -688,16 +729,16 @@ class Convolution(Module):
         self.out_channels = out_channels
         self.stride = stride
         self.padding = padding
-        stdv = 1. / math.sqrt(self.k_height)
-        self.kernel = np.random.uniform(-stdv, stdv, (self.out_channels,
-                                                      self.in_channels,
-                                                      self.k_height,
-                                                      self.k_width))
+        stdv = 1.0 / math.sqrt(self.k_height)
+        self.kernel = np.random.uniform(
+            -stdv, stdv, (self.out_channels, self.in_channels, self.k_height, self.k_width)
+        )
         self.bias = np.random.uniform(-stdv, stdv, (self.out_channels, 1, 1))
 
     def print(self, color=""):
         msg = "\tConvolution feature maps: {}, kernel size: {}".format(
-            self.out_channels, self.kernel.shape)
+            self.out_channels, self.kernel.shape
+        )
         print_in_color(msg, color)
 
     def print_kernels(self):
@@ -719,35 +760,48 @@ class Convolution(Module):
         k_width = kernel.shape[3]
         stride = 1
 
-        patches = np.asarray([x[n, c, stride*j:stride*j+k_height,
-                                stride*k:stride*k+k_width]
-                              for n in range(N)
-                              for c in range(in_channel)
-                              for j in range(x_height-k_height+1)
-                              for k in range(x_width-k_width+1)])
+        patches = np.asarray(
+            [
+                x[n, c, stride * j : stride * j + k_height, stride * k : stride * k + k_width]
+                for n in range(N)
+                for c in range(in_channel)
+                for j in range(x_height - k_height + 1)
+                for k in range(x_width - k_width + 1)
+            ]
+        )
 
-        patches = patches.reshape([N, in_channel,
-                                   (x_height-k_height+1)*(x_width-k_width+1),
-                                   k_height*k_width])
+        patches = patches.reshape(
+            [N, in_channel, (x_height - k_height + 1) * (x_width - k_width + 1), k_height * k_width]
+        )
 
-        kernel_repeat = np.repeat(kernel.reshape([out_channel, in_channel, 1,
-                                                  k_height*k_width]),
-                                  patches.shape[2], axis=2)
+        kernel_repeat = np.repeat(
+            kernel.reshape([out_channel, in_channel, 1, k_height * k_width]),
+            patches.shape[2],
+            axis=2,
+        )
 
-        result = np.asarray([np.matmul(kernel_repeat[o, c, j, :],
-                                       patches[n, c, j, :])
-                             for n in range(N)
-                             for o in range(out_channel)
-                             for c in range(patches.shape[1])
-                             for j in range(patches.shape[2])])
+        result = np.asarray(
+            [
+                np.matmul(kernel_repeat[o, c, j, :], patches[n, c, j, :])
+                for n in range(N)
+                for o in range(out_channel)
+                for c in range(patches.shape[1])
+                for j in range(patches.shape[2])
+            ]
+        )
 
-        result = result.reshape([N, kernel_repeat.shape[0],
-                                 kernel_repeat.shape[1],
-                                 x_height-k_height+1, x_width-k_width+1])
+        result = result.reshape(
+            [
+                N,
+                kernel_repeat.shape[0],
+                kernel_repeat.shape[1],
+                x_height - k_height + 1,
+                x_width - k_width + 1,
+            ]
+        )
         y = np.sum(result, axis=2)
         if is_forward:
-            y = np.array([y[n, :, :, :] + self.bias
-                          for n in range(y.shape[0])])
+            y = np.array([y[n, :, :, :] + self.bias for n in range(y.shape[0])])
         return y
 
     def forward(self, x):
@@ -765,11 +819,11 @@ class Convolution(Module):
 
         dk = self.convolution(mean_x, mean_dout, is_forward=False)
         dk = np.repeat(dk, self.kernel.shape[1], axis=1)
-        self.kernel = self.kernel - self.lr*dk
+        self.kernel = self.kernel - self.lr * dk
 
         db = np.zeros_like(self.bias)
         db = np.sum(dout, axis=(0, 2, 3))
-        self.bias = self.bias - self.lr*db.reshape(self.bias.shape)
+        self.bias = self.bias - self.lr * db.reshape(self.bias.shape)
 
     def backward(self, dout):
         self.update(dout)
@@ -778,13 +832,16 @@ class Convolution(Module):
         for i in range(self.kernel.shape[-2]):
             for j in range(self.kernel.shape[-1]):
                 k_reshaped[:, :, j, i] = np.flip(self.kernel[:, :, i, j])
-        k_reshaped = k_reshaped.reshape([self.in_channels,
-                                         self.out_channels,
-                                         self.k_height,
-                                         self.k_width])
+        k_reshaped = k_reshaped.reshape(
+            [self.in_channels, self.out_channels, self.k_height, self.k_width]
+        )
 
-        npad = ((0, 0), (0, 0), (self.k_height-1, self.k_height-1),
-                (self.k_width-1, self.k_width-1))
+        npad = (
+            (0, 0),
+            (0, 0),
+            (self.k_height - 1, self.k_height - 1),
+            (self.k_width - 1, self.k_width - 1),
+        )
         dout = np.pad(dout, pad_width=npad, mode='constant', constant_values=0)
 
         dy = self.convolution(dout, k_reshaped, is_forward=False)
@@ -805,10 +862,9 @@ class Convolution(Module):
 
     def load(self, path, i):
         with open(path + self.type + i + '-weights.bin', "rb") as f:
-            self.kernel = np.fromfile(f).reshape([self.out_channels,
-                                                  self.in_channels,
-                                                  self.k_height,
-                                                  self.k_width])
+            self.kernel = np.fromfile(f).reshape(
+                [self.out_channels, self.in_channels, self.k_height, self.k_width]
+            )
         with open(path + self.type + i + '-bias.bin', "rb") as f:
             self.bias = np.fromfile(f).reshape([self.out_channels, 1, 1])
 
@@ -834,9 +890,7 @@ class MaxPooling2D(Module):
         x_height = x.shape[2]
         x_width = x.shape[3]
 
-        npad = ((0, 0), (0, 0),
-                (0, x_height % self.kernel_size),
-                (0, x_width % self.kernel_size))
+        npad = ((0, 0), (0, 0), (0, x_height % self.kernel_size), (0, x_width % self.kernel_size))
         x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
 
         x_n = x.shape[0]
@@ -844,19 +898,24 @@ class MaxPooling2D(Module):
         x_height = x.shape[2]
         x_width = x.shape[3]
         self.x_max_idx = np.zeros(self.x_shape_origin)
-        y = np.zeros([x_n, x_depth,
-                      int(x_height/self.stride), int(x_width/self.stride)])
+        y = np.zeros([x_n, x_depth, int(x_height / self.stride), int(x_width / self.stride)])
 
         for n in range(x_n):
             for c in range(x_depth):
-                for j in range(x_height//self.stride):
-                    for k in range(x_width//self.stride):
+                for j in range(x_height // self.stride):
+                    for k in range(x_width // self.stride):
                         i_max = np.argmax(
-                            x[n, c,
-                              self.stride*j:self.stride*j+self.kernel_size,
-                              self.stride*k:self.stride*k+self.kernel_size])
-                        idx = [int(i_max > 1) + self.stride*j,
-                               int(i_max == 1 or i_max == 3) + self.stride*k]
+                            x[
+                                n,
+                                c,
+                                self.stride * j : self.stride * j + self.kernel_size,
+                                self.stride * k : self.stride * k + self.kernel_size,
+                            ]
+                        )
+                        idx = [
+                            int(i_max > 1) + self.stride * j,
+                            int(i_max == 1 or i_max == 3) + self.stride * k,
+                        ]
                         self.x_max_idx[n, c, idx[0], idx[1]] = 1
                         y[n, c, j, k] = x[n, c, idx[0], idx[1]]
         return y
@@ -872,13 +931,14 @@ class MaxPooling2D(Module):
             for c in range(x_depth):
                 for j in range(int(x_height)):
                     for k in range(int(x_width)):
-                        dy[n, c, j, k] = self.x_max_idx[n, c, j, k] *\
-                            dout[n, c, j//self.stride, k//self.stride]
+                        dy[n, c, j, k] = (
+                            self.x_max_idx[n, c, j, k]
+                            * dout[n, c, j // self.stride, k // self.stride]
+                        )
         return dy
 
     def print(self, color=""):
-        print_in_color("\tMax Pooling layer, size: " + str(self.kernel_size),
-                       color)
+        print_in_color("\tMax Pooling layer, size: " + str(self.kernel_size), color)
 
 
 class AveragePooling2D(Module):
@@ -902,26 +962,27 @@ class AveragePooling2D(Module):
         x_height = x.shape[2]
         x_width = x.shape[3]
 
-        npad = ((0, 0), (0, 0),
-                (0, x_height % self.kernel_size),
-                (0, x_width % self.kernel_size))
+        npad = ((0, 0), (0, 0), (0, x_height % self.kernel_size), (0, x_width % self.kernel_size))
         x = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
 
         x_n = x.shape[0]
         x_depth = x.shape[1]
         x_height = x.shape[2]
         x_width = x.shape[3]
-        y = np.zeros([x_n, x_depth,
-                      int(x_height/self.stride), int(x_width/self.stride)])
+        y = np.zeros([x_n, x_depth, int(x_height / self.stride), int(x_width / self.stride)])
 
         for n in range(x_n):
             for c in range(x_depth):
-                for j in range(x_height//self.stride):
-                    for k in range(x_width//self.stride):
+                for j in range(x_height // self.stride):
+                    for k in range(x_width // self.stride):
                         y[n, c, j, k] = np.mean(
-                            x[n, c,
-                              self.stride*j:self.stride*j+self.kernel_size,
-                              self.stride*k:self.stride*k+self.kernel_size])
+                            x[
+                                n,
+                                c,
+                                self.stride * j : self.stride * j + self.kernel_size,
+                                self.stride * k : self.stride * k + self.kernel_size,
+                            ]
+                        )
         return y
 
     def backward(self, dout):
@@ -935,13 +996,11 @@ class AveragePooling2D(Module):
             for c in range(x_depth):
                 for j in range(int(x_height)):
                     for k in range(int(x_width)):
-                        dy[n, c, j, k] = dout[n, c, j//self.stride,
-                                              k//self.stride] / 4
+                        dy[n, c, j, k] = dout[n, c, j // self.stride, k // self.stride] / 4
         return dy
 
     def print(self, color=""):
-        print_in_color(
-            "\tAverage Pooling layer, size: " + str(self.kernel_size), color)
+        print_in_color("\tAverage Pooling layer, size: " + str(self.kernel_size), color)
 
 
 class Flatten(Module):
@@ -963,7 +1022,7 @@ class Flatten(Module):
         self.channel = x.shape[1]
         self.width = x.shape[2]
         self.height = x.shape[3]
-        y = x.reshape([self.n, self.channel*self.width*self.height])
+        y = x.reshape([self.n, self.channel * self.width * self.height])
         return y
 
     def backward(self, x):
@@ -1013,27 +1072,28 @@ class Sequential(Module):
     def print(self, print_color=True):
         possible_colors = print_in_color("-h")
         if len(possible_colors) < len(__types__):
-            print('Not enough color available, {} more\
-                needed'.format(len(__types__) - len(possible_colors)))
+            print(
+                'Not enough color available, {} more\
+                needed'.format(
+                    len(__types__) - len(possible_colors)
+                )
+            )
             print_color = False
-            legend = ", ".join([__types__[i] for i in
-                                range(len(__types__))])
+            legend = ", ".join([__types__[i] for i in range(len(__types__))])
         elif print_color:
-            legend = ", ".join([__types__[i] + " in " +
-                                possible_colors[i] for i in
-                                range(len(__types__))])
+            legend = ", ".join(
+                [__types__[i] + " in " + possible_colors[i] for i in range(len(__types__))]
+            )
         else:
             legend = ""
         print("Model description: " + legend)
         for layer in self.model:
             if print_color:
-                layer.print(possible_colors[
-                    __types__.index(layer.type)])
+                layer.print(possible_colors[__types__.index(layer.type)])
             else:
                 layer.print()
         if print_color:
-            self.loss.print(possible_colors[
-                __types__.index(self.loss.type)])
+            self.loss.print(possible_colors[__types__.index(self.loss.type)])
         else:
             self.loss.print()
 
