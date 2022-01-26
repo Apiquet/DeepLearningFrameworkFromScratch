@@ -6,15 +6,22 @@ This script run neural network model on a camera live stream
 """
 
 import argparse
+import os
+import sys
+import time
+
 import cv2
 import numpy as np
-import os
-import time
-import sys
 
-
-COMMANDS = {0: "move_forward", 1: "go_down", 2: "rot_10_deg",
-            3: "go_up", 4: "take_off", 5: "land", 6: "idle"}
+COMMANDS = {
+    0: "move_forward",
+    1: "go_down",
+    2: "rot_10_deg",
+    3: "go_up",
+    4: "take_off",
+    5: "land",
+    6: "idle",
+}
 
 
 def send_command(anafi, command_id):
@@ -44,34 +51,20 @@ def send_command(anafi, command_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-p",
-        "--weight_path",
-        required=True,
-        type=str,
-        help="Path to load weights for the model."
+        "-p", "--weight_path", required=True, type=str, help="Path to load weights for the model."
     )
     parser.add_argument(
         "-a",
         "--pyparrot_path",
         required=True,
         type=str,
-        help="Path to pyparrot module downloaded from amymcgovern on github."
+        help="Path to pyparrot module downloaded from amymcgovern on github.",
     )
     parser.add_argument(
-        "-w",
-        "--img_width",
-        required=False,
-        default=28,
-        type=int,
-        help="Image width."
+        "-w", "--img_width", required=False, default=28, type=int, help="Image width."
     )
     parser.add_argument(
-        "-n",
-        "--num_classes",
-        required=False,
-        default=7,
-        type=int,
-        help="Number of classes."
+        "-n", "--num_classes", required=False, default=7, type=int, help="Number of classes."
     )
     parser.add_argument(
         "-c",
@@ -80,7 +73,7 @@ def main():
         default=None,
         type=str,
         help="Crop image, format: MinWidth,MaxWidth,MinHeight,MaxHeight.\
-              Set -1 for the unchanged ones"
+              Set -1 for the unchanged ones",
     )
     parser.add_argument(
         "-r",
@@ -88,7 +81,7 @@ def main():
         required=False,
         default=None,
         type=str,
-        help="Resize shape, format: height,width"
+        help="Resize shape, format: height,width",
     )
     parser.add_argument(
         "-b",
@@ -96,14 +89,10 @@ def main():
         required=False,
         default=None,
         type=str,
-        help="To binarize images, format for thresholding: min,max"
+        help="To binarize images, format for thresholding: min,max",
     )
     parser.add_argument(
-        "-g",
-        "--gray",
-        required=False,
-        action="store_true",
-        help="To save 1-channel images"
+        "-g", "--gray", required=False, action="store_true", help="To save 1-channel images"
     )
     parser.add_argument(
         "-e",
@@ -111,7 +100,7 @@ def main():
         required=False,
         default=None,
         type=str,
-        help="Erode option, format: kernel_size,iteration"
+        help="Erode option, format: kernel_size,iteration",
     )
     parser.add_argument(
         "-d",
@@ -119,22 +108,17 @@ def main():
         required=False,
         default=None,
         type=str,
-        help="Dilate option, format: kernel_size,iteration"
+        help="Dilate option, format: kernel_size,iteration",
     )
     parser.add_argument(
-        "-m",
-        "--camid",
-        required=False,
-        default=0,
-        type=int,
-        help="Camera ID, default is 0"
+        "-m", "--camid", required=False, default=0, type=int, help="Camera ID, default is 0"
     )
     parser.add_argument(
         "-t",
         "--tensorflow",
         required=False,
         action="store_true",
-        help="To specify if Tensorflow model is used."
+        help="To specify if Tensorflow model is used.",
     )
     parser.add_argument(
         "-z",
@@ -142,7 +126,7 @@ def main():
         required=False,
         default=3,
         type=int,
-        help="Minimum number of identical commands before sending to drone."
+        help="Minimum number of identical commands before sending to drone.",
     )
 
     args = parser.parse_args()
@@ -152,6 +136,7 @@ def main():
     """
     sys.path.append(args.pyparrot_path)
     from pyparrot.Anafi import Anafi
+
     print("Connecting to drone...")
     anafi = Anafi(drone_type="Anafi", ip_address="192.168.42.1")
     success = anafi.connect(10)
@@ -163,23 +148,32 @@ def main():
     Load model
     """
     print("Loading model...")
-    input_size = args.img_width**2
+    input_size = args.img_width ** 2
     num_class = args.num_classes
     hidden_size = 128
 
     if args.tensorflow:
         import tensorflow as tf
+
         model = tf.keras.models.load_model(args.weight_path)
     else:
         script_path = os.path.realpath(__file__)
         sys.path.append(os.path.dirname(script_path) + "/../")
         from homemade_framework import framework as NN
-        model = NN.Sequential([NN.Linear(input_size, hidden_size),
-                               NN.LeakyReLU(), NN.BatchNorm(),
-                               NN.Linear(hidden_size, hidden_size),
-                               NN.LeakyReLU(), NN.BatchNorm(),
-                               NN.Linear(hidden_size, num_class),
-                               NN.Softmax()], NN.LossMSE())
+
+        model = NN.Sequential(
+            [
+                NN.Linear(input_size, hidden_size),
+                NN.LeakyReLU(),
+                NN.BatchNorm(),
+                NN.Linear(hidden_size, hidden_size),
+                NN.LeakyReLU(),
+                NN.BatchNorm(),
+                NN.Linear(hidden_size, num_class),
+                NN.Softmax(),
+            ],
+            NN.LossMSE(),
+        )
         model.load(args.weight_path)
 
     """
@@ -202,8 +196,12 @@ def main():
             min_height = res[2]
         if res[3] != -1:
             max_height = res[3]
-        print("Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
-              , {},{}".format(min_width, max_width, min_height, max_height))
+        print(
+            "Image cropped to minWidth:maxWidth, minHeight:maxHeight: {}:{}\
+              , {},{}".format(
+                min_width, max_width, min_height, max_height
+            )
+        )
     pause = False
     imgs = []
 
@@ -233,10 +231,8 @@ def main():
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if args.binarize:
                 frame = cv2.medianBlur(frame, 5)
-                min_thresh, max_thresh = [int(x) for x in
-                                          args.binarize.split(',')]
-                ret, frame = cv2.threshold(frame, min_thresh, max_thresh,
-                                           cv2.THRESH_BINARY)
+                min_thresh, max_thresh = [int(x) for x in args.binarize.split(',')]
+                ret, frame = cv2.threshold(frame, min_thresh, max_thresh, cv2.THRESH_BINARY)
             if args.erode is not None:
                 k_size, iteration = [int(x) for x in args.erode.split(',')]
                 kernel = np.ones((k_size, k_size), np.uint8)
@@ -248,10 +244,9 @@ def main():
 
             if args.resize:
                 height, width = [int(size) for size in args.resize.split(',')]
-                frame = cv2.resize(frame, (height, width),
-                                   interpolation=cv2.INTER_AREA)
+                frame = cv2.resize(frame, (height, width), interpolation=cv2.INTER_AREA)
 
-            image = np.asarray(frame)/255.
+            image = np.asarray(frame) / 255.0
             cv2.imshow("Input image for the model", frame)
             image = image.reshape([np.prod(image.shape)])
             if len(imgs) < args.number_of_confimation:
@@ -262,8 +257,7 @@ def main():
                 else:
                     results = NN.get_inferences(model, np.asarray(imgs))
                 print("Model's output on buffer: ", results)
-                if np.unique(results).size == 1 and\
-                        COMMANDS[results[0]] != "idle":
+                if np.unique(results).size == 1 and COMMANDS[results[0]] != "idle":
                     send_command(anafi, results[0])
                     imgs = []
                 imgs = imgs[1:]
