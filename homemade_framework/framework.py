@@ -662,9 +662,8 @@ class Linear(Module):
         self.bias = np.random.uniform(-stdv, stdv, (self.out_features, 1))
 
     def update(self, dout):
-        lr = self.lr
-        self.weight = self.weight - np.multiply(lr, np.matmul(np.transpose(self.prev_x), dout))
-        self.bias = self.bias - lr * dout.mean(0).reshape([self.bias.shape[0], 1]) * 1
+        self.weight = self.weight - np.multiply(self.lr, np.matmul(np.transpose(self.prev_x), dout))
+        self.bias = self.bias - self.lr * dout.mean(0).reshape([self.bias.shape[0], 1]) * 1
 
     def backward(self, dout):
         b = np.matmul(dout, np.transpose(self.weight))
