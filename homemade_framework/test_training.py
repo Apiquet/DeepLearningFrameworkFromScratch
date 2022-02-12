@@ -96,7 +96,7 @@ def main():
     Model.print(print_color=False)
 
     # start training
-    train_homemade_model(
+    train(
         Model,
         args.num_epochs,
         train_features,
