@@ -10,6 +10,8 @@
 
 [This article](https://apiquet.com/2020/08/21/neural-network-from-scratch-part-4/) explains how the Deep Learning Framework can help to create and train a CNN for hand signal recognition for UAV piloting. It also shows how to build a dataset for a particular task and how to deploy a trained model to perform the task.
 
+[This article](https://foundationsofdl.com/2021/12/12/neural-network-from-scratch-part-5-c-deep-learning-framework-implementation/) explains how to create a C++ library by implementing a simple Deep Learning Framework: Linear layer, MSE loss, ReLU and softmax functions, a feature/label generator and a training loop.
+
 ## Layer implementation:
 
 * Linear layer
