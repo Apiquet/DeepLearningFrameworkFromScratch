@@ -10,7 +10,7 @@
 
 [This article](https://apiquet.com/2020/08/21/neural-network-from-scratch-part-4/) explains how the Deep Learning Framework can help to create and train a CNN for hand signal recognition for UAV piloting. It also shows how to build a dataset for a particular task and how to deploy a trained model to perform the task.
 
-[This article](https://apiquet.com/2021/12/12/neural-network-from-scratch-part-5-c-deep-learning-framework-implementation/) explains how to create a C++ library by implementing a simple Deep Learning Framework: Linear layer, MSE loss, ReLU and Softmax functions, a feature/label generator and a training loop.
+[This article](https://apiquet.com/2021/12/12/neural-network-from-scratch-part-5-c-deep-learning-framework-implementation/) explains how to create a C++ library that implements a simple Deep Learning Framework: Linear layer, MSE loss, ReLU and Softmax functions, a feature/label generator and a training loop. The main goal of this article is to show how to develop a project in C++ by explaining key concepts of the language.
 
 ## Layer implementation:
 
