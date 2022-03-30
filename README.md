@@ -2,15 +2,15 @@
 
 ## Project
 
-[This article](https://apiquet.com/2020/03/28/neural-net-from-scratch-part-1/) describes how to implement a gradient descent using the differential approach (2D example implementation), then, using the perturbation approach (3D example implementation).
+Gradient Descent: [This article](https://apiquet.com/2020/03/28/neural-net-from-scratch-part-1/) describes how to implement a gradient descent using the differential approach (2D example implementation), then, using the perturbation approach (3D example implementation).
 
-[This article](https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/) shows how to create a set of non-linearly separable data and how to implement a FCN from scratch using numpy: linear layers, activation functions, loss and training function.
+FCN implementation: [This article](https://apiquet.com/2020/05/02/neural-network-from-scratch-part-2/) shows how to create a set of non-linearly separable data and how to implement a FCN from scratch using numpy: linear layers, activation functions, loss and training function.
 
-[This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of a Deep Learning Framework with only numpy. It implements all the layers listed in the next section. It also explains how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description, getting its confusion matrix, etc.
+Python Deep Learning Framework implementation: [This article](https://apiquet.com/2020/07/18/deep-learning-framework-from-scratch-part-3/) shows the implementation of a Deep Learning Framework with only numpy. It implements all the layers listed in the next section. It also explains how to implement some good features provided by a Deep Learning Framework such as: saving and loading a model to deploy it somewhere, getting its number of parameters, drawing learning curves, printing its description, getting its confusion matrix, etc.
 
-[This article](https://apiquet.com/2020/08/21/neural-network-from-scratch-part-4/) explains how the Deep Learning Framework can help to create and train a CNN for hand signal recognition for UAV piloting. It also shows how to build a dataset for a particular task and how to deploy a trained model to perform the task.
+Network deployment: [This article](https://apiquet.com/2020/08/21/neural-network-from-scratch-part-4/) explains how the Deep Learning Framework can help to create and train a CNN for hand signal recognition for UAV piloting. It also shows how to build a dataset for a particular task and how to deploy a trained model to perform the task.
 
-[This article](https://apiquet.com/2021/12/12/neural-network-from-scratch-part-5-c-deep-learning-framework-implementation/) explains how to create a C++ library that implements a simple Deep Learning Framework: Linear layer, MSE loss, ReLU and Softmax functions, a feature/label generator and a training loop. The main goal of this article is to show how to develop a project in C++ by explaining key concepts of the language.
+C++ Deep Learning Framework implementation: [This article](https://apiquet.com/2021/12/12/neural-network-from-scratch-part-5-c-deep-learning-framework-implementation/) explains how to create a C++ library that implements a simple Deep Learning Framework: Linear layer, MSE loss, ReLU and Softmax functions, a feature/label generator and a training loop. The main goal of this article is to show how to develop a project in C++ by explaining key concepts of the language.
 
 ## Layer implementation:
 
